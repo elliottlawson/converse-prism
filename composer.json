@@ -1,0 +1,61 @@
+{
+    "name": "elliottlawson/converse-prism",
+    "description": "Seamless integration between Laravel Converse and Prism PHP for AI conversations",
+    "version": "0.1.0",
+    "keywords": ["laravel", "ai", "conversations", "prism", "llm", "openai", "anthropic"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Elliott Lawson"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "elliottlawson/converse": "^0.1",
+        "illuminate/support": "^11.0|^12.0"
+    },
+    "suggest": {
+        "echolabsdev/prism": "Required to use this integration package (^0.71)"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.4",
+        "laravel/pint": "^1.22",
+        "spatie/laravel-ray": "^1.40",
+        "pestphp/pest": "^3.0",
+        "pestphp/pest-plugin-laravel": "^3.0",
+        "echolabsdev/prism": "^0.71",
+        "mockery/mockery": "^1.6"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true,
+            "pestphp/pest-plugin": true
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "ElliottLawson\\ConversePrism\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ElliottLawson\\ConversePrism\\Tests\\": "tests/",
+            "ElliottLawson\\Converse\\Tests\\": "vendor/elliottlawson/converse/tests/"
+        }
+    },
+    "scripts": {
+        "test": [
+            "@php vendor/bin/pest --parallel"
+        ],
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "build": "@php vendor/bin/testbench workbench:build --ansi",
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@build",
+            "@php vendor/bin/testbench serve --ansi"
+        ]
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
