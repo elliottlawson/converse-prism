@@ -7,8 +7,8 @@
  * automatically returns Prism-enabled conversations
  */
 
-use ElliottLawson\ConversePrism\Tests\Models\TestUser;
 use ElliottLawson\ConversePrism\Models\Conversation;
+use ElliottLawson\ConversePrism\Tests\Models\TestUser;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
 
