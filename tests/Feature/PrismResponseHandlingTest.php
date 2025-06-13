@@ -73,7 +73,7 @@ it('handles a complete Prism text response with all metadata', function () {
     expect($message->role->value)->toBe('assistant')
         ->and($message->content)->toBe('This is the assistant response')
         ->and($message->metadata)->toMatchArray([
-            'tokens' => null,  // totalTokens not available in Usage object
+            'tokens' => 40,  // calculated: 25 + 15
             'prompt_tokens' => 25,
             'completion_tokens' => 15,
             'finish_reason' => FinishReason::Stop->name,
@@ -154,7 +154,7 @@ it('handles Prism tool call responses correctly', function () {
         ->and($message->content)->toBeJson()
         ->and(json_decode($message->content, true))->toBe($prismResponse->toolCalls)
         ->and($message->metadata)->toMatchArray([
-            'tokens' => null,  // totalTokens not available in Usage object
+            'tokens' => 80,  // calculated: 50 + 30
             'prompt_tokens' => 50,
             'completion_tokens' => 30,
         ]);
@@ -194,7 +194,7 @@ it('handles streaming responses with proper chunk management', function () {
             'model' => 'gpt-4',
             'streamed' => true,
             'chunks' => 7,
-            'tokens' => null,  // totalTokens not available in Usage object
+            'tokens' => 28,  // calculated: 20 + 8
             'prompt_tokens' => 20,
             'completion_tokens' => 8,
             'finish_reason' => FinishReason::Stop->name,
@@ -252,7 +252,7 @@ it('handles multi-step Prism responses', function () {
     $message = $this->conversation->addPrismResponse($prismResponse);
 
     expect($message->metadata['steps'])->toBe(3)
-        ->and($message->metadata['tokens'])->toBe(null);  // totalTokens not available in Usage object
+        ->and($message->metadata['tokens'])->toBe(150);  // calculated: 100 + 50
 });
 
 it('correctly handles missing or null Prism response fields', function () {

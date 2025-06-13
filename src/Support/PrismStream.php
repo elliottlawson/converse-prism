@@ -85,9 +85,11 @@ class PrismStream
         $metadata = [];
 
         if (isset($response->usage)) {
-            $metadata['tokens'] = $response->usage->totalTokens ?? null;
-            $metadata['prompt_tokens'] = $response->usage->promptTokens ?? null;
-            $metadata['completion_tokens'] = $response->usage->completionTokens ?? null;
+            $promptTokens = $response->usage->promptTokens ?? 0;
+            $completionTokens = $response->usage->completionTokens ?? 0;
+            $metadata['tokens'] = $promptTokens + $completionTokens;
+            $metadata['prompt_tokens'] = $promptTokens ?: null;
+            $metadata['completion_tokens'] = $completionTokens ?: null;
         }
 
         if (isset($response->meta)) {
@@ -96,7 +98,7 @@ class PrismStream
         }
 
         if (isset($response->finishReason)) {
-            $metadata['finish_reason'] = $response->finishReason->name;
+            $metadata['finish_reason'] = $response->finishReason?->name;
         }
 
         return $metadata;

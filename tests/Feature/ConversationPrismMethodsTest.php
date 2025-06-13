@@ -146,7 +146,7 @@ it('adds prism response as assistant message', function () {
     expect($message->role->value)->toBe('assistant')
         ->and($message->content)->toBe('This is the AI response')
         ->and($message->metadata)->toMatchArray([
-            'tokens' => null,  // totalTokens not available in Usage object
+            'tokens' => 100,  // calculated: 50 + 50
             'prompt_tokens' => 50,
             'completion_tokens' => 50,
             'finish_reason' => FinishReason::Stop->name,
