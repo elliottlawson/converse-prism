@@ -19,6 +19,8 @@ use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\SystemMessage;
 use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
+use Prism\Prism\ValueObjects\Meta;
+use Prism\Prism\ValueObjects\Usage;
 
 beforeEach(function () {
     // Create a test user
@@ -115,25 +117,41 @@ it('handles tool result messages correctly', function () {
 });
 
 it('adds prism response as assistant message', function () {
-    $response = (object) [
-        'text' => 'This is the AI response',
-        'usage' => (object) [
-            'totalTokens' => 100,
-            'promptTokens' => 50,
-            'completionTokens' => 50,
-        ],
-        'finishReason' => FinishReason::Stop,
-    ];
+    $response = new class
+    {
+        public $text = 'This is the AI response';
+
+        public $usage;
+
+        public $finishReason = FinishReason::Stop;
+
+        public $meta;
+
+        public function __construct()
+        {
+            $this->usage = new Usage(
+                promptTokens: 50,
+                completionTokens: 50
+            );
+
+            $this->meta = new Meta(
+                id: 'req_456',
+                model: 'gpt-4'
+            );
+        }
+    };
 
     $message = $this->conversation->addPrismResponse($response, ['custom' => 'metadata']);
 
     expect($message->role->value)->toBe('assistant')
         ->and($message->content)->toBe('This is the AI response')
         ->and($message->metadata)->toMatchArray([
-            'tokens' => 100,
+            'tokens' => null,  // totalTokens not available in Usage object
             'prompt_tokens' => 50,
             'completion_tokens' => 50,
             'finish_reason' => FinishReason::Stop->name,
+            'model' => 'gpt-4',
+            'provider_request_id' => 'req_456',
             'custom' => 'metadata',
         ]);
 });

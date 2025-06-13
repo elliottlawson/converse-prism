@@ -90,9 +90,9 @@ class PrismStream
             $metadata['completion_tokens'] = $response->usage->completionTokens ?? null;
         }
 
-        if (isset($response->response)) {
-            $metadata['model'] = $response->response['model'] ?? null;
-            $metadata['provider_request_id'] = $response->response['id'] ?? null;
+        if (isset($response->meta)) {
+            $metadata['model'] = $response->meta->model ?? null;
+            $metadata['provider_request_id'] = $response->meta->id ?? null;
         }
 
         if (isset($response->finishReason)) {
