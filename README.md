@@ -5,17 +5,14 @@ Seamless integration between Laravel Converse and Prism PHP for AI conversations
 ## Installation
 
 ```bash
-composer require elliottlawson/converse-prism echolabsdev/prism
+composer require elliottlawson/converse-prism
 ```
-
-This will install the integration package along with Laravel Converse (automatically included as a dependency). You need to manually install Prism since it's required for the integration to work.
 
 ## Requirements
 
 - PHP 8.2+
 - Laravel 11.0+ or 12.0+
-- elliottlawson/converse ^0.1.1
-- echolabsdev/prism ^0.71
+- [Prism PHP](https://github.com/echolabsdev/prism) - A powerful Laravel package for integrating Large Language Models
 
 ## Features
 
