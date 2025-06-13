@@ -4,17 +4,11 @@ Seamless integration between Laravel Converse and Prism PHP for AI conversations
 
 ## Installation
 
-First, make sure you have both Converse and Prism installed:
-
 ```bash
-composer require elliottlawson/converse echolabsdev/prism
+composer require elliottlawson/converse-prism echolabsdev/prism
 ```
 
-Then install the integration package:
-
-```bash
-composer require elliottlawson/converse-prism
-```
+This will install the integration package along with Laravel Converse (automatically included as a dependency). You need to manually install Prism since it's required for the integration to work.
 
 ## Requirements
 
