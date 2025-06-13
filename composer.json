@@ -1,7 +1,6 @@
 {
     "name": "elliottlawson/converse-prism",
     "description": "Seamless integration between Laravel Converse and Prism PHP for AI conversations",
-    "version": "0.1.0",
     "keywords": ["laravel", "ai", "conversations", "prism", "llm", "openai", "anthropic"],
     "license": "MIT",
     "authors": [
