@@ -7,25 +7,14 @@
  * automatically returns Prism-enabled conversations
  */
 
-use ElliottLawson\ConversePrism\Concerns\HasAIConversations;
+use ElliottLawson\ConversePrism\Tests\Models\TestUser;
 use ElliottLawson\ConversePrism\Models\Conversation;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
 
-// Create a test user class that uses our Prism trait instead of the base trait
-class TestUserWithPrism extends Authenticatable
-{
-    use HasAIConversations;
-
-    protected $table = 'users';
-
-    protected $fillable = ['name', 'email'];
-}
-
 beforeEach(function () {
-    // Create a test user using our extended class
-    $this->user = TestUserWithPrism::create([
+    // Create a test user
+    $this->user = TestUser::create([
         'name' => 'Test User',
         'email' => 'test@example.com',
     ]);

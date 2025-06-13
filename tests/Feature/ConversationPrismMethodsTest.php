@@ -10,7 +10,7 @@
  * - streamPrismResponse() handles streaming responses
  */
 
-use ElliottLawson\Converse\Tests\Models\TestUser;
+use ElliottLawson\ConversePrism\Tests\Models\TestUser;
 use ElliottLawson\ConversePrism\Models\Conversation;
 use ElliottLawson\ConversePrism\Models\Message;
 use ElliottLawson\ConversePrism\Support\PrismStream;

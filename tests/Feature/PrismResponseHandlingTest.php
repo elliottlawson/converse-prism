@@ -12,7 +12,7 @@
  * - Edge cases (empty responses, missing metadata)
  */
 
-use ElliottLawson\Converse\Tests\Models\TestUser;
+use ElliottLawson\ConversePrism\Tests\Models\TestUser;
 use ElliottLawson\ConversePrism\Models\Conversation;
 use ElliottLawson\ConversePrism\Models\Message;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;

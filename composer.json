@@ -39,8 +39,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "ElliottLawson\\ConversePrism\\Tests\\": "tests/",
-            "ElliottLawson\\Converse\\Tests\\": "vendor/elliottlawson/converse/tests/"
+            "ElliottLawson\\ConversePrism\\Tests\\": "tests/"
         }
     },
     "scripts": {
