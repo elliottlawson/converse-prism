@@ -14,6 +14,7 @@ use ElliottLawson\ConversePrism\Models\Conversation;
 use ElliottLawson\ConversePrism\Models\Message;
 use ElliottLawson\ConversePrism\Support\PrismStream;
 use ElliottLawson\ConversePrism\Tests\Models\TestUser;
+use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\SystemMessage;
 use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
@@ -121,7 +122,7 @@ it('adds prism response as assistant message', function () {
             'promptTokens' => 50,
             'completionTokens' => 50,
         ],
-        'finishReason' => 'stop',
+        'finishReason' => FinishReason::Stop,
     ];
 
     $message = $this->conversation->addPrismResponse($response, ['custom' => 'metadata']);
@@ -132,7 +133,7 @@ it('adds prism response as assistant message', function () {
             'tokens' => 100,
             'prompt_tokens' => 50,
             'completion_tokens' => 50,
-            'finish_reason' => 'stop',
+            'finish_reason' => FinishReason::Stop->name,
             'custom' => 'metadata',
         ]);
 });

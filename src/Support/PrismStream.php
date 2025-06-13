@@ -96,9 +96,7 @@ class PrismStream
         }
 
         if (isset($response->finishReason)) {
-            $metadata['finish_reason'] = is_object($response->finishReason) && method_exists($response->finishReason, 'value')
-                ? $response->finishReason->value
-                : $response->finishReason;
+            $metadata['finish_reason'] = $response->finishReason->name;
         }
 
         return $metadata;

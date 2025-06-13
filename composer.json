@@ -46,6 +46,7 @@
         "test": [
             "@php vendor/bin/pest --parallel"
         ],
+        "format": "@php vendor/bin/pint",
         "prepare": "@php vendor/bin/testbench package:discover --ansi",
         "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
         "build": "@php vendor/bin/testbench workbench:build --ansi",

@@ -13,8 +13,8 @@
  */
 
 use ElliottLawson\ConversePrism\Models\Conversation;
-use ElliottLawson\ConversePrism\Models\Message;
 use ElliottLawson\ConversePrism\Tests\Models\TestUser;
+use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\SystemMessage;
 use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
@@ -46,7 +46,7 @@ it('handles a complete Prism text response with all metadata', function () {
     {
         public $text = 'This is the assistant response';
 
-        public $finishReason = 'stop';
+        public $finishReason = FinishReason::Stop;
 
         public $usage;
 
@@ -76,7 +76,7 @@ it('handles a complete Prism text response with all metadata', function () {
             'tokens' => 40,
             'prompt_tokens' => 25,
             'completion_tokens' => 15,
-            'finish_reason' => 'stop',
+            'finish_reason' => FinishReason::Stop->name,
             'model' => 'claude-3-5-sonnet-20241022',
             'provider_request_id' => 'resp_123',
         ]);
@@ -178,7 +178,7 @@ it('handles streaming responses with proper chunk management', function () {
     {
         public $text = 'The weather in Paris is cloudy.';
 
-        public $finishReason = 'stop';
+        public $finishReason = FinishReason::Stop;
 
         public $usage;
 
@@ -205,7 +205,7 @@ it('handles streaming responses with proper chunk management', function () {
             'tokens' => 28,
             'prompt_tokens' => 20,
             'completion_tokens' => 8,
-            'finish_reason' => 'stop',
+            'finish_reason' => FinishReason::Stop->name,
         ])
         ->and($message->metadata)->toHaveKey('stream_duration_ms');
 });
