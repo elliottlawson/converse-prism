@@ -11,7 +11,6 @@
 .php-cs-fixer.cache
 composer.lock
 package-lock.json
-phpunit.xml
 testbench.yaml
 .DS_Store
 Thumbs.db
