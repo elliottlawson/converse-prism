@@ -76,7 +76,7 @@ it('handles a complete Prism text response with all metadata', function () {
             'tokens' => 40,
             'prompt_tokens' => 25,
             'completion_tokens' => 15,
-            'finish_reason' => 'Stop',
+            'finish_reason' => FinishReason::Stop->name,
             'model' => 'claude-3-5-sonnet-20241022',
             'provider_request_id' => 'resp_123',
         ]);

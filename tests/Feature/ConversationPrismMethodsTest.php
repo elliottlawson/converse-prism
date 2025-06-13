@@ -133,7 +133,7 @@ it('adds prism response as assistant message', function () {
             'tokens' => 100,
             'prompt_tokens' => 50,
             'completion_tokens' => 50,
-            'finish_reason' => 'Stop',
+            'finish_reason' => FinishReason::Stop->name,
             'custom' => 'metadata',
         ]);
 });
