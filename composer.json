@@ -10,7 +10,7 @@
     ],
     "require": {
         "php": "^8.2",
-        "elliottlawson/converse": "^0.1",
+        "elliottlawson/converse": "^0.1.3",
         "illuminate/support": "^11.0|^12.0"
     },
     "suggest": {
