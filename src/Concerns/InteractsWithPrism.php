@@ -4,36 +4,53 @@ namespace ElliottLawson\ConversePrism\Concerns;
 
 use ElliottLawson\ConversePrism\Support\PrismFormatter;
 use ElliottLawson\ConversePrism\Support\PrismStream;
+use Prism\Prism\Contracts\Message as PrismMessage;
+use Prism\Prism\Embeddings\PendingRequest as PendingEmbeddingRequest;
+use Prism\Prism\Prism;
+use Prism\Prism\Structured\PendingRequest as PendingStructuredRequest;
+use Prism\Prism\Text\PendingRequest as PendingTextRequest;
 
 trait InteractsWithPrism
 {
     /**
-     * Convert conversation messages or single message to Prism format
+     * Convert conversation messages to Prism format
      *
-     * @return array|PrismMessage When called on Conversation, returns array of messages. When called on Message, returns single message.
+     * @return array Array of Prism message objects
      */
-    public function toPrism(): mixed
+    public function toPrismMessages(): array
     {
-        // If called on Conversation model
-        if (method_exists($this, 'messages')) {
-            return $this->messages()
-                ->completed()
-                ->orderBy('created_at')
-                ->get()
-                ->map(fn ($message) => PrismFormatter::formatMessage($message))
-                ->toArray();
+        // Only available on Conversation model
+        if (! method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('toPrismMessages can only be called on Conversation model');
         }
 
-        // If called on Message model
+        return $this->messages()
+            ->completed()
+            ->orderBy('created_at')
+            ->get()
+            ->map(fn ($message) => PrismFormatter::formatMessage($message))
+            ->toArray();
+    }
+
+    /**
+     * Convert single message to Prism format
+     */
+    public function toPrismMessage(): PrismMessage
+    {
+        // Only available on Message model
+        if (method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('toPrismMessage can only be called on Message model. Use toPrismMessages() on Conversation model instead.');
+        }
+
         return PrismFormatter::formatMessage($this);
     }
 
     /**
      * Add a Prism response to the conversation
      *
-     * @return \ElliottLawson\Converse\Models\Message
+     * @return self Returns the conversation for fluent chaining
      */
-    public function addPrismResponse($response, array $metadata = [])
+    public function addPrismResponse($response, array $metadata = []): self
     {
         // Only available on Conversation model
         if (! method_exists($this, 'messages')) {
@@ -42,25 +59,31 @@ trait InteractsWithPrism
 
         // Handle tool calls
         if (isset($response->toolCalls) && filled($response->toolCalls)) {
-            return $this->addToolCallMessage(
+            $this->addToolCallMessage(
                 json_encode($response->toolCalls),
                 $this->extractPrismMetadata($response, $metadata)
             );
+
+            return $this;
         }
 
         // Handle tool results
         if (isset($response->toolResults) && filled($response->toolResults)) {
-            return $this->addToolResultMessage(
+            $this->addToolResultMessage(
                 json_encode($response->toolResults),
                 $this->extractPrismMetadata($response, $metadata)
             );
+
+            return $this;
         }
 
         // Standard assistant message
-        return $this->addAssistantMessage(
+        $this->addAssistantMessage(
             $response->text ?? '',
             $this->extractPrismMetadata($response, $metadata)
         );
+
+        return $this;
     }
 
     /**
@@ -109,5 +132,52 @@ trait InteractsWithPrism
         }
 
         return array_merge($metadata, $additional);
+    }
+
+    /**
+     * Convert conversation to a Prism text request with messages pre-populated
+     */
+    public function toPrismText(): PendingTextRequest
+    {
+        // Only available on Conversation model
+        if (! method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('toPrismText can only be called on Conversation model');
+        }
+
+        return Prism::text()->withMessages($this->toPrismMessages());
+    }
+
+    /**
+     * Convert conversation to a Prism structured request with messages pre-populated
+     */
+    public function toPrismStructured(): PendingStructuredRequest
+    {
+        // Only available on Conversation model
+        if (! method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('toPrismStructured can only be called on Conversation model');
+        }
+
+        return Prism::structured()->withMessages($this->toPrismMessages());
+    }
+
+    /**
+     * Convert conversation to a Prism embeddings request
+     */
+    public function toPrismEmbeddings(): PendingEmbeddingRequest
+    {
+        // Only available on Conversation model
+        if (! method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('toPrismEmbeddings can only be called on Conversation model');
+        }
+
+        // For embeddings, we'll use the last user message content as the input
+        $lastUserMessage = $this->messages()
+            ->where('role', \ElliottLawson\Converse\Enums\MessageRole::User)
+            ->latest()
+            ->first();
+
+        $input = $lastUserMessage ? $lastUserMessage->content : '';
+
+        return Prism::embeddings()->fromInput($input);
     }
 }

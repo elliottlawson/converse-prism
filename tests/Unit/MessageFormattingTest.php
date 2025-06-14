@@ -9,7 +9,8 @@
  */
 
 use ElliottLawson\Converse\Enums\MessageRole;
-use ElliottLawson\Converse\Models\Message;
+use ElliottLawson\Converse\Models\Message as BaseMessage;
+use ElliottLawson\ConversePrism\Models\Message;
 use ElliottLawson\ConversePrism\Support\PrismFormatter;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\SystemMessage;
@@ -17,7 +18,7 @@ use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
 
 it('formats messages to correct Prism message types', function ($role, $expectedClass) {
-    $message = new Message([
+    $message = new BaseMessage([
         'role' => $role,
         'content' => 'Test content',
     ]);
@@ -44,7 +45,7 @@ it('formats messages to correct Prism message types', function ($role, $expected
 ]);
 
 it('handles null content gracefully', function () {
-    $message = new Message([
+    $message = new BaseMessage([
         'role' => MessageRole::User,
         'content' => null,
     ]);
@@ -64,7 +65,7 @@ it('handles tool calls with proper JSON', function () {
         ],
     ];
 
-    $message = new Message([
+    $message = new BaseMessage([
         'role' => MessageRole::ToolCall,
         'content' => json_encode($toolCalls),
     ]);
@@ -86,7 +87,7 @@ it('handles tool results with proper JSON', function () {
         ],
     ];
 
-    $message = new Message([
+    $message = new BaseMessage([
         'role' => MessageRole::ToolResult,
         'content' => json_encode($toolResults),
     ]);

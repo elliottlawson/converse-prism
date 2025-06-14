@@ -1,13 +1,14 @@
 <?php
 
 /**
- * Feature Tests: Conversation Prism Methods
+ * Feature Tests: Conversation Prism Message Conversion
  *
- * These tests verify that the methods added to Conversation and Message
- * models work correctly:
- * - toPrism() converts messages to Prism format
+ * These tests verify core message conversion functionality:
+ * - toPrism() converts conversation messages to Prism format
+ * - toPrismMessage() converts individual messages to Prism format
  * - addPrismResponse() saves Prism responses as messages
  * - streamPrismResponse() handles streaming responses
+ * - Fluent interface for building conversations
  */
 
 use ElliottLawson\ConversePrism\Models\Conversation;
@@ -15,6 +16,7 @@ use ElliottLawson\ConversePrism\Models\Message;
 use ElliottLawson\ConversePrism\Support\PrismStream;
 use ElliottLawson\ConversePrism\Tests\Models\TestUser;
 use Prism\Prism\Enums\FinishReason;
+use Prism\Prism\Text\PendingRequest as PendingTextRequest;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\SystemMessage;
 use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
@@ -48,7 +50,7 @@ it('converts conversation messages to prism format', function () {
     $this->conversation->addAssistantMessage('Hello human');
     $this->conversation->addSystemMessage('You are helpful');
 
-    $prismMessages = $this->conversation->toPrism();
+    $prismMessages = $this->conversation->toPrismMessages();
 
     expect($prismMessages)->toBeArray()
         ->toHaveCount(3)
@@ -66,7 +68,7 @@ it('converts a single message to prism format', function () {
     // Get the message using our extended model
     $message = Message::latest()->first();
 
-    $prismFormat = $message->toPrism();
+    $prismFormat = $message->toPrismMessage();
 
     expect($prismFormat)->toBeInstanceOf(UserMessage::class)
         ->and($prismFormat->content)->toBe('Test message');
@@ -86,7 +88,7 @@ it('handles tool call messages correctly', function () {
     // Get the message using our extended model
     $message = Message::latest()->first();
 
-    $prismFormat = $message->toPrism();
+    $prismFormat = $message->toPrismMessage();
 
     expect($prismFormat)->toBeInstanceOf(AssistantMessage::class)
         ->and($prismFormat->content)->toBe('')
@@ -108,7 +110,7 @@ it('handles tool result messages correctly', function () {
     // Get the message using our extended model
     $message = Message::latest()->first();
 
-    $prismFormat = $message->toPrism();
+    $prismFormat = $message->toPrismMessage();
 
     expect($prismFormat)->toBeInstanceOf(ToolResultMessage::class)
         ->and($prismFormat->toolResults)->toHaveCount(1)
@@ -141,7 +143,8 @@ it('adds prism response as assistant message', function () {
         }
     };
 
-    $message = $this->conversation->addPrismResponse($response, ['custom' => 'metadata']);
+    $this->conversation->addPrismResponse($response, ['custom' => 'metadata']);
+    $message = $this->conversation->messages()->latest()->first();
 
     expect($message->role->value)->toBe('assistant')
         ->and($message->content)->toBe('This is the AI response')
@@ -169,7 +172,8 @@ it('adds prism tool call response correctly', function () {
         'toolCalls' => $toolCalls,
     ];
 
-    $message = $this->conversation->addPrismResponse($response);
+    $this->conversation->addPrismResponse($response);
+    $message = $this->conversation->messages()->latest()->first();
 
     expect($message->role->value)->toBe('tool_call')
         ->and(json_decode($message->content, true))->toBe($toolCalls);
@@ -231,4 +235,74 @@ it('throws exception when calling streamPrismResponse on message model', functio
 
     expect(fn () => $message->streamPrismResponse())
         ->toThrow(BadMethodCallException::class, 'streamPrismResponse can only be called on Conversation model');
+});
+
+describe('Message Conversion Methods', function () {
+    it('can convert individual messages using toPrismMessage', function () {
+        $this->conversation->addUserMessage('Hello world');
+        $message = $this->conversation->messages()->latest()->first();
+
+        $prismMessage = $message->toPrismMessage();
+
+        expect($prismMessage)->toBeInstanceOf(UserMessage::class)
+            ->and($prismMessage->content)->toBe('Hello world');
+    });
+
+    it('throws exception when calling toPrismMessage on conversation model', function () {
+        expect(fn () => $this->conversation->toPrismMessage())
+            ->toThrow(BadMethodCallException::class, 'toPrismMessage can only be called on Message model. Use toPrismMessages() on Conversation model instead.');
+    });
+
+    it('can convert a conversation to a prism object', function () {
+        $this->conversation->addSystemMessage('You are helpful assistant who writes poems');
+        $this->conversation->addUserMessage('write a poem about the sea');
+
+        $result = $this->conversation->toPrismText();
+
+        expect($result)->toBeInstanceOf(PendingTextRequest::class);
+    });
+});
+
+describe('Fluent Interface', function () {
+    it('chains multiple message additions using native fluent interface', function () {
+        $conversation = $this->conversation
+            ->addSystemMessage('You are a helpful assistant')
+            ->addUserMessage('Hello world')
+            ->addAssistantMessage('Hi there');
+
+        expect($conversation)->toBeInstanceOf(Conversation::class);
+
+        // Verify all messages were added to conversation
+        $messages = $conversation->messages()->orderBy('created_at')->get();
+        expect($messages)->toHaveCount(3);
+        expect($messages[0]->role->value)->toBe('system');
+        expect($messages[0]->content)->toBe('You are a helpful assistant');
+        expect($messages[1]->role->value)->toBe('user');
+        expect($messages[1]->content)->toBe('Hello world');
+        expect($messages[2]->role->value)->toBe('assistant');
+        expect($messages[2]->content)->toBe('Hi there');
+    });
+
+    it('can configure Prism text request fluently', function () {
+        $pendingRequest = $this->conversation
+            ->addUserMessage('Test message')
+            ->toPrismText()
+            ->withMaxTokens(2000);
+
+        expect($pendingRequest)->toBeInstanceOf(PendingTextRequest::class);
+
+        // Verify the pending request has the expected configuration methods
+        expect(method_exists($pendingRequest, 'using'))->toBeTrue();
+        expect(method_exists($pendingRequest, 'withMaxTokens'))->toBeTrue();
+        expect(method_exists($pendingRequest, 'usingTemperature'))->toBeTrue();
+    });
+
+    it('passes metadata when using native fluent interface', function () {
+        $metadata = ['source' => 'fluent-test'];
+
+        $this->conversation->addUserMessage('Test message', $metadata);
+
+        $lastMessage = $this->conversation->messages()->latest()->first();
+        expect($lastMessage->metadata)->toMatchArray($metadata);
+    });
 });

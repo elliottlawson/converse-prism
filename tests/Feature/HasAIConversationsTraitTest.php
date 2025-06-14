@@ -29,7 +29,7 @@ it('returns prism-enabled conversations from startConversation', function () {
     expect($conversation)->toBeInstanceOf(Conversation::class);
 
     // Verify Prism methods are available
-    expect(method_exists($conversation, 'toPrism'))->toBeTrue()
+    expect(method_exists($conversation, 'toPrismMessages'))->toBeTrue()
         ->and(method_exists($conversation, 'addPrismResponse'))->toBeTrue()
         ->and(method_exists($conversation, 'streamPrismResponse'))->toBeTrue();
 });
@@ -44,7 +44,7 @@ it('can use prism methods on conversations created through the trait', function 
     $conversation->addAssistantMessage('Hi there!');
 
     // Should be able to convert to Prism format
-    $prismMessages = $conversation->toPrism();
+    $prismMessages = $conversation->toPrismMessages();
 
     expect($prismMessages)->toBeArray()
         ->toHaveCount(2)
@@ -66,7 +66,7 @@ it('returns prism-enabled conversations from conversations() relationship', func
     // Each conversation should be our extended model with Prism methods
     foreach ($conversations as $conversation) {
         expect($conversation)->toBeInstanceOf(Conversation::class)
-            ->and(method_exists($conversation, 'toPrism'))->toBeTrue();
+            ->and(method_exists($conversation, 'toPrismMessages'))->toBeTrue();
     }
 });
 
@@ -77,12 +77,14 @@ it('maintains all original converse functionality', function () {
     ]);
 
     // All original methods should work
-    $userMessage = $conversation->addUserMessage('Test message');
-    $assistantMessage = $conversation->addAssistantMessage('Response');
+    $conversation->addUserMessage('Test message');
+    $conversation->addAssistantMessage('Response');
 
     expect($conversation->messages)->toHaveCount(2)
         ->and($conversation->title)->toBe('Test')
-        ->and($conversation->metadata)->toMatchArray(['custom' => 'data'])
-        ->and($userMessage->role->value)->toBe('user')
-        ->and($assistantMessage->role->value)->toBe('assistant');
+        ->and($conversation->metadata)->toMatchArray(['custom' => 'data']);
+
+    $messages = $conversation->messages()->orderBy('created_at')->get();
+    expect($messages[0]->role->value)->toBe('user')
+        ->and($messages[1]->role->value)->toBe('assistant');
 });

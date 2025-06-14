@@ -68,7 +68,8 @@ it('handles a complete Prism text response with all metadata', function () {
         }
     };
 
-    $message = $this->conversation->addPrismResponse($prismResponse);
+    $this->conversation->addPrismResponse($prismResponse);
+    $message = $this->conversation->messages()->latest()->first();
 
     expect($message->role->value)->toBe('assistant')
         ->and($message->content)->toBe('This is the assistant response')
@@ -101,7 +102,7 @@ it('formats complex conversations for Prism correctly', function () {
     ]));
     $this->conversation->addAssistantMessage('The weather in San Francisco is 72°F and sunny.');
 
-    $prismMessages = $this->conversation->toPrism();
+    $prismMessages = $this->conversation->toPrismMessages();
 
     expect($prismMessages)->toHaveCount(5)
         ->and($prismMessages[0])->toBeInstanceOf(SystemMessage::class)
@@ -148,7 +149,8 @@ it('handles Prism tool call responses correctly', function () {
         }
     };
 
-    $message = $this->conversation->addPrismResponse($prismResponse);
+    $this->conversation->addPrismResponse($prismResponse);
+    $message = $this->conversation->messages()->latest()->first();
 
     expect($message->role->value)->toBe('tool_call')
         ->and($message->content)->toBeJson()
@@ -207,7 +209,7 @@ it('preserves message integrity through format conversion', function () {
     $originalContent = 'Test message with special characters: "quotes", \'apostrophes\', & symbols!';
     $this->conversation->addUserMessage($originalContent);
 
-    $prismMessages = $this->conversation->toPrism();
+    $prismMessages = $this->conversation->toPrismMessages();
 
     expect($prismMessages[0])->toBeInstanceOf(UserMessage::class)
         ->and($prismMessages[0]->content)->toBe($originalContent);
@@ -225,7 +227,8 @@ it('handles empty tool arguments correctly', function () {
         ];
     };
 
-    $message = $this->conversation->addPrismResponse($prismResponse);
+    $this->conversation->addPrismResponse($prismResponse);
+    $message = $this->conversation->messages()->latest()->first();
 
     $storedToolCalls = json_decode($message->content, true);
     expect($storedToolCalls[0]['arguments'])->toBe('{}');
@@ -249,7 +252,8 @@ it('handles multi-step Prism responses', function () {
         }
     };
 
-    $message = $this->conversation->addPrismResponse($prismResponse);
+    $this->conversation->addPrismResponse($prismResponse);
+    $message = $this->conversation->messages()->latest()->first();
 
     expect($message->metadata['steps'])->toBe(3)
         ->and($message->metadata['tokens'])->toBe(150);  // calculated: 100 + 50
@@ -261,7 +265,8 @@ it('correctly handles missing or null Prism response fields', function () {
         public $text = 'Response with minimal data';
     };
 
-    $message = $this->conversation->addPrismResponse($minimalResponse);
+    $this->conversation->addPrismResponse($minimalResponse);
+    $message = $this->conversation->messages()->latest()->first();
 
     expect($message->content)->toBe('Response with minimal data')
         ->and($message->metadata)->toBe([]);
@@ -274,7 +279,7 @@ it('maintains conversation context for Prism', function () {
     $this->conversation->addUserMessage('Tell me a joke');
 
     // Get messages in Prism format
-    $prismMessages = $this->conversation->toPrism();
+    $prismMessages = $this->conversation->toPrismMessages();
 
     // Verify the context is maintained in order
     expect($prismMessages)->toHaveCount(3)
@@ -294,7 +299,7 @@ it('maintains conversation context for Prism', function () {
     $this->conversation->addPrismResponse($jokeResponse);
 
     // Verify full conversation
-    $allMessages = $this->conversation->toPrism();
+    $allMessages = $this->conversation->toPrismMessages();
     expect($allMessages)->toHaveCount(4)
         ->and($allMessages[3])->toBeInstanceOf(AssistantMessage::class)
         ->and($allMessages[3]->content)->toBe('Why did the developer go broke? Because he used up all his cache!');

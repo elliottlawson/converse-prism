@@ -24,7 +24,7 @@ class PrismFormatter
             MessageRole::System => new SystemMessage($message->content ?? ''),
             MessageRole::Assistant => new AssistantMessage($message->content ?? ''),
             MessageRole::ToolCall => self::createToolCallMessage($message),
-            MessageRole::ToolResult => self::createToolResultMessage($message),
+            MessageRole::ToolResult => self::createToolResultMessageFromMessage($message),
         };
     }
 
@@ -48,9 +48,9 @@ class PrismFormatter
     }
 
     /**
-     * Create a ToolResultMessage
+     * Create a ToolResultMessage from a Converse Message
      */
-    private static function createToolResultMessage(Message $message): ToolResultMessage
+    private static function createToolResultMessageFromMessage(Message $message): ToolResultMessage
     {
         $toolResultsData = json_decode($message->content, true) ?: [];
         $toolResults = [];
