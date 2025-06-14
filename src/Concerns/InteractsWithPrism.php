@@ -3,6 +3,7 @@
 namespace ElliottLawson\ConversePrism\Concerns;
 
 use ElliottLawson\ConversePrism\Support\PrismFormatter;
+use ElliottLawson\ConversePrism\Support\PrismRequestProxy;
 use ElliottLawson\ConversePrism\Support\PrismStream;
 use Prism\Prism\Contracts\Message as PrismMessage;
 use Prism\Prism\Embeddings\PendingRequest as PendingEmbeddingRequest;
@@ -179,5 +180,32 @@ trait InteractsWithPrism
         $input = $lastUserMessage ? $lastUserMessage->content : '';
 
         return Prism::embeddings()->fromInput($input);
+    }
+
+    /**
+     * Convert conversation to a Prism text request that automatically saves responses
+     *
+     * This method returns a proxy that intercepts asText() calls and automatically
+     * saves the response to the conversation before returning it.
+     *
+     * @param  array  $metadata  Optional metadata to save with the response
+     *
+     * @example
+     * $response = $conversation->toPrismTextWithSave()
+     *     ->using(Provider::Anthropic, 'claude-3-5-sonnet')
+     *     ->withMaxTokens(8000)
+     *     ->asText();
+     * // Response is automatically saved to conversation and returned
+     */
+    public function toPrismTextWithSave(array $metadata = []): PrismRequestProxy
+    {
+        // Only available on Conversation model
+        if (! method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('toPrismTextWithSave can only be called on Conversation model');
+        }
+
+        $pendingRequest = Prism::text()->withMessages($this->toPrismMessages());
+
+        return new PrismRequestProxy($pendingRequest, $this, $metadata);
     }
 }
