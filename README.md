@@ -47,7 +47,9 @@ That's it! All your existing Converse code continues to work, plus you get Prism
 
 ### Fluent Conversation Building with Prism
 
-The most powerful feature is the ability to fluently build conversations and get Prism request objects:
+The most powerful feature is the ability to fluently build conversations and get Prism request objects with **automatic message passing**. When you call `toPrismText()`, `toPrismStructured()`, or `toPrismEmbeddings()`, the package automatically calls `withMessages()` under the hood, passing all your conversation messages to Prism.
+
+This means you don't need to manually extract messages or format them - it's all handled seamlessly:
 
 ```php
 use Prism\Enums\Provider;
@@ -61,15 +63,15 @@ $response = $user->startConversation(['title' => 'Code Review'])
     ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
     ->withMaxTokens(1000)
     ->withTemperature(0.2)
-    ->generate();
+    ->asText();
 
 // Add the response back to the conversation
-$conversation->addPrismResponse($response);
+$conversation->addPrismResponse($response->text);
 ```
 
 ### Direct Prism Facade Integration
 
-The package provides three methods that return configured Prism request objects:
+The package provides three methods that return configured Prism request objects. The key benefit is that **you never need to manually call `withMessages()`** - the conversation messages are automatically included:
 
 #### Text Generation
 ```php
@@ -87,7 +89,7 @@ $response = $request
     ->withTemperature(0.7)
     ->withTopP(0.9)
     ->withPresencePenalty(0.1)
-    ->generate();
+    ->asText();
 ```
 
 #### Structured Output
@@ -107,7 +109,7 @@ $response = $conversation
     ->toPrismStructured()
     ->using(Provider::OpenAI, 'gpt-4')
     ->withSchema($productSchema)
-    ->generate();
+    ->asStructured();
 
 // Save the structured response
 $conversation->addPrismResponse($response);
@@ -120,8 +122,28 @@ $embeddings = $conversation
     ->addUserMessage('What is the meaning of life?')
     ->toPrismEmbeddings()
     ->using(Provider::OpenAI, 'text-embedding-3-small')
-    ->generate();
+    ->asEmbeddings();
 ```
+
+### Understanding the Magic: Automatic Message Passing
+
+When you call any of the `toPrism*()` methods, the package automatically:
+
+1. Retrieves all completed messages from the conversation
+2. Converts them to Prism's typed message objects
+3. Calls `withMessages()` on the Prism request
+4. Returns the configured request ready for additional options
+
+```php
+// What you write:
+$request = $conversation->toPrismText();
+
+// What happens under the hood:
+$messages = $conversation->toPrismMessages(); // Get all messages as Prism objects
+$request = Prism::text()->withMessages($messages); // Pass them to Prism
+```
+
+This eliminates the boilerplate of manually extracting and formatting messages!
 
 ### Message Format Conversion
 
@@ -191,10 +213,10 @@ $response = $conversation
     ->toPrismText()
     ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
     ->withTools([$weatherTool])
-    ->generate();
+    ->asText();
 
 // Automatically detects and saves tool calls
-$conversation->addPrismResponse($response);
+$conversation->addPrismResponse($response->text);
 // Creates a tool_call message if response contains toolCalls
 
 // Add tool result and continue
@@ -208,9 +230,9 @@ $conversation->addToolResultMessage(json_encode([
 $finalResponse = $conversation
     ->toPrismText()
     ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
-    ->generate();
+    ->asText();
 
-$conversation->addPrismResponse($finalResponse);
+$conversation->addPrismResponse($finalResponse->text);
 // "The weather in Paris is currently sunny with a temperature of 22°C."
 ```
 
@@ -239,9 +261,9 @@ class ChatController extends Controller
             ->toPrismText()
             ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
             ->withMaxTokens(1000)
-            ->generate();
+            ->asText();
             
-        $conversation->addPrismResponse($response);
+        $conversation->addPrismResponse($response->text);
         
         return response()->json([
             'conversation' => $conversation->fresh()->load('messages'),
@@ -264,9 +286,9 @@ class ChatController extends Controller
             ->toPrismText()
             ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
             ->withMaxTokens(1000)
-            ->generate();
+            ->asText();
             
-        $conversation->addPrismResponse($response, [
+        $conversation->addPrismResponse($response->text, [
             'ip' => $request->ip(),
             'user_agent' => $request->userAgent()
         ]);
