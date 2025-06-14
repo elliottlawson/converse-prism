@@ -8,6 +8,7 @@ use Prism\Prism\Prism;
 use Prism\Prism\Text\PendingRequest as PendingTextRequest;
 use Prism\Prism\Structured\PendingRequest as PendingStructuredRequest;
 use Prism\Prism\Embeddings\PendingRequest as PendingEmbeddingRequest;
+use Prism\Prism\Contracts\Message as PrismMessage;
 
 trait InteractsWithPrism
 {
@@ -36,26 +37,11 @@ trait InteractsWithPrism
      *
      * @return PrismMessage
      */
-    public function toPrismMessage()
+    public function toPrismMessage(): PrismMessage
     {
         // Only available on Message model
         if (method_exists($this, 'messages')) {
             throw new \BadMethodCallException('toPrismMessage can only be called on Message model. Use toPrismMessages() on Conversation model instead.');
-        }
-
-        return PrismFormatter::formatMessage($this);
-    }
-
-    /**
-     * Alias for toPrismMessage() for backward compatibility
-     *
-     * @return PrismMessage
-     */
-    public function toPrism()
-    {
-        // Only available on Message model
-        if (method_exists($this, 'messages')) {
-            throw new \BadMethodCallException('toPrism can only be called on Message model. Use toPrismMessages() on Conversation model instead.');
         }
 
         return PrismFormatter::formatMessage($this);

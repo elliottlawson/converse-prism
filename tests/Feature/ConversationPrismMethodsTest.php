@@ -68,7 +68,7 @@ it('converts a single message to prism format', function () {
     // Get the message using our extended model
     $message = Message::latest()->first();
 
-    $prismFormat = $message->toPrism();
+    $prismFormat = $message->toPrismMessage();
 
     expect($prismFormat)->toBeInstanceOf(UserMessage::class)
         ->and($prismFormat->content)->toBe('Test message');
@@ -88,7 +88,7 @@ it('handles tool call messages correctly', function () {
     // Get the message using our extended model
     $message = Message::latest()->first();
 
-    $prismFormat = $message->toPrism();
+    $prismFormat = $message->toPrismMessage();
 
     expect($prismFormat)->toBeInstanceOf(AssistantMessage::class)
         ->and($prismFormat->content)->toBe('')
@@ -110,7 +110,7 @@ it('handles tool result messages correctly', function () {
     // Get the message using our extended model
     $message = Message::latest()->first();
 
-    $prismFormat = $message->toPrism();
+    $prismFormat = $message->toPrismMessage();
 
     expect($prismFormat)->toBeInstanceOf(ToolResultMessage::class)
         ->and($prismFormat->toolResults)->toHaveCount(1)

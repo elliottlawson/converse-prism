@@ -29,7 +29,7 @@ it('returns prism-enabled conversations from startConversation', function () {
     expect($conversation)->toBeInstanceOf(Conversation::class);
 
     // Verify Prism methods are available
-    expect(method_exists($conversation, 'toPrism'))->toBeTrue()
+    expect(method_exists($conversation, 'toPrismMessages'))->toBeTrue()
         ->and(method_exists($conversation, 'addPrismResponse'))->toBeTrue()
         ->and(method_exists($conversation, 'streamPrismResponse'))->toBeTrue();
 });
@@ -66,7 +66,7 @@ it('returns prism-enabled conversations from conversations() relationship', func
     // Each conversation should be our extended model with Prism methods
     foreach ($conversations as $conversation) {
         expect($conversation)->toBeInstanceOf(Conversation::class)
-            ->and(method_exists($conversation, 'toPrism'))->toBeTrue();
+            ->and(method_exists($conversation, 'toPrismMessages'))->toBeTrue();
     }
 });
 
