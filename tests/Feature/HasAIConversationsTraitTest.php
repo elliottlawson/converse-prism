@@ -83,7 +83,7 @@ it('maintains all original converse functionality', function () {
     expect($conversation->messages)->toHaveCount(2)
         ->and($conversation->title)->toBe('Test')
         ->and($conversation->metadata)->toMatchArray(['custom' => 'data']);
-    
+
     $messages = $conversation->messages()->orderBy('created_at')->get();
     expect($messages[0]->role->value)->toBe('user')
         ->and($messages[1]->role->value)->toBe('assistant');

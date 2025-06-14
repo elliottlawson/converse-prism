@@ -28,7 +28,6 @@ class PrismFormatter
         };
     }
 
-
     /**
      * Create an AssistantMessage with tool calls
      */

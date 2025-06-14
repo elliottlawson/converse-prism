@@ -11,9 +11,9 @@
 use ElliottLawson\ConversePrism\Models\Conversation;
 use ElliottLawson\ConversePrism\Models\Message;
 use ElliottLawson\ConversePrism\Tests\Models\TestUser;
-use Prism\Prism\Text\PendingRequest as PendingTextRequest;
-use Prism\Prism\Structured\PendingRequest as PendingStructuredRequest;
 use Prism\Prism\Embeddings\PendingRequest as PendingEmbeddingRequest;
+use Prism\Prism\Structured\PendingRequest as PendingStructuredRequest;
+use Prism\Prism\Text\PendingRequest as PendingTextRequest;
 
 beforeEach(function () {
     // Create a test user
@@ -43,9 +43,9 @@ describe('Prism Text Integration', function () {
             ->toPrismText()
             ->withMaxTokens(500)
             ->usingTemperature(0.3);
-        
+
         expect($pendingRequest)->toBeInstanceOf(PendingTextRequest::class);
-        
+
         // Verify that the PendingRequest has the correct methods available
         expect(method_exists($pendingRequest, 'asText'))->toBeTrue();
         expect(method_exists($pendingRequest, 'using'))->toBeTrue();
@@ -59,7 +59,7 @@ describe('Prism Text Integration', function () {
             ->withMaxTokens(200)
             ->usingTemperature(0.8)
             ->usingTopP(0.9);
-            
+
         expect($pendingRequest)->toBeInstanceOf(PendingTextRequest::class);
         expect(method_exists($pendingRequest, 'asText'))->toBeTrue();
         expect(method_exists($pendingRequest, 'asStream'))->toBeTrue();
@@ -73,7 +73,7 @@ describe('Prism Text Integration', function () {
             ->withMaxTokens(50);
 
         expect($pendingRequest)->toBeInstanceOf(PendingTextRequest::class);
-        
+
         // Verify messages were added to conversation
         $messages = $this->conversation->messages()->orderBy('created_at')->get();
         expect($messages)->toHaveCount(2);
@@ -89,9 +89,9 @@ describe('Prism Structured Integration', function () {
             ->addUserMessage('Generate a JSON response with user profile data')
             ->toPrismStructured()
             ->withMaxTokens(300);
-        
+
         expect($pendingRequest)->toBeInstanceOf(PendingStructuredRequest::class);
-        
+
         // Verify that the PendingRequest has the correct methods available
         expect(method_exists($pendingRequest, 'using'))->toBeTrue();
         expect(method_exists($pendingRequest, 'withSchema'))->toBeTrue();
@@ -117,9 +117,9 @@ describe('Prism Embeddings Integration', function () {
             ->addSystemMessage('System response')
             ->addUserMessage('Document content for semantic search embedding')
             ->toPrismEmbeddings();
-        
+
         expect($pendingRequest)->toBeInstanceOf(PendingEmbeddingRequest::class);
-        
+
         // Verify that the PendingRequest has the correct methods available
         expect(method_exists($pendingRequest, 'fromInput'))->toBeTrue();
         expect(method_exists($pendingRequest, 'asEmbeddings'))->toBeTrue();
@@ -161,7 +161,7 @@ describe('Integration with Other Features', function () {
             ->toPrismText()
             ->withMaxTokens(100);
         expect($prismRequest)->toBeInstanceOf(PendingTextRequest::class);
-        
+
         // Method 2: Our custom builder approach
         $builderRequest = $this->conversation
             ->addUserMessage('Follow-up question')
@@ -177,17 +177,17 @@ describe('Integration with Other Features', function () {
             ->addUserMessage('Question 1')
             ->toPrismText()
             ->withMaxTokens(200);
-        
+
         // Add more messages and create new request
         $newPrismRequest = $this->conversation
             ->addUserMessage('Question 2')
             ->toPrismText()
             ->usingTemperature(0.7);
-        
+
         // Verify state is maintained
         $messages = $this->conversation->messages()->orderBy('created_at')->get();
         expect($messages)->toHaveCount(3); // system + user1 + user2
-        
+
         // Both requests should be valid
         expect($newPrismRequest)->toBeInstanceOf(PendingTextRequest::class);
     });

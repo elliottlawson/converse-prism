@@ -241,7 +241,7 @@ describe('Message Conversion Methods', function () {
     it('can convert individual messages using toPrismMessage', function () {
         $this->conversation->addUserMessage('Hello world');
         $message = $this->conversation->messages()->latest()->first();
-        
+
         $prismMessage = $message->toPrismMessage();
 
         expect($prismMessage)->toBeInstanceOf(UserMessage::class)
@@ -256,7 +256,7 @@ describe('Message Conversion Methods', function () {
     it('can convert a conversation to a prism object', function () {
         $this->conversation->addSystemMessage('You are helpful assistant who writes poems');
         $this->conversation->addUserMessage('write a poem about the sea');
-        
+
         $result = $this->conversation->toPrismText();
 
         expect($result)->toBeInstanceOf(PendingTextRequest::class);
@@ -290,7 +290,7 @@ describe('Fluent Interface', function () {
             ->withMaxTokens(2000);
 
         expect($pendingRequest)->toBeInstanceOf(PendingTextRequest::class);
-        
+
         // Verify the pending request has the expected configuration methods
         expect(method_exists($pendingRequest, 'using'))->toBeTrue();
         expect(method_exists($pendingRequest, 'withMaxTokens'))->toBeTrue();
@@ -299,11 +299,10 @@ describe('Fluent Interface', function () {
 
     it('passes metadata when using native fluent interface', function () {
         $metadata = ['source' => 'fluent-test'];
-        
+
         $this->conversation->addUserMessage('Test message', $metadata);
 
         $lastMessage = $this->conversation->messages()->latest()->first();
         expect($lastMessage->metadata)->toMatchArray($metadata);
     });
 });
-

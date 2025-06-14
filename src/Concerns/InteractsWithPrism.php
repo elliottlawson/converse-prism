@@ -4,11 +4,11 @@ namespace ElliottLawson\ConversePrism\Concerns;
 
 use ElliottLawson\ConversePrism\Support\PrismFormatter;
 use ElliottLawson\ConversePrism\Support\PrismStream;
-use Prism\Prism\Prism;
-use Prism\Prism\Text\PendingRequest as PendingTextRequest;
-use Prism\Prism\Structured\PendingRequest as PendingStructuredRequest;
-use Prism\Prism\Embeddings\PendingRequest as PendingEmbeddingRequest;
 use Prism\Prism\Contracts\Message as PrismMessage;
+use Prism\Prism\Embeddings\PendingRequest as PendingEmbeddingRequest;
+use Prism\Prism\Prism;
+use Prism\Prism\Structured\PendingRequest as PendingStructuredRequest;
+use Prism\Prism\Text\PendingRequest as PendingTextRequest;
 
 trait InteractsWithPrism
 {
@@ -34,8 +34,6 @@ trait InteractsWithPrism
 
     /**
      * Convert single message to Prism format
-     *
-     * @return PrismMessage
      */
     public function toPrismMessage(): PrismMessage
     {
@@ -65,6 +63,7 @@ trait InteractsWithPrism
                 json_encode($response->toolCalls),
                 $this->extractPrismMetadata($response, $metadata)
             );
+
             return $this;
         }
 
@@ -74,6 +73,7 @@ trait InteractsWithPrism
                 json_encode($response->toolResults),
                 $this->extractPrismMetadata($response, $metadata)
             );
+
             return $this;
         }
 
@@ -82,6 +82,7 @@ trait InteractsWithPrism
             $response->text ?? '',
             $this->extractPrismMetadata($response, $metadata)
         );
+
         return $this;
     }
 
@@ -132,8 +133,6 @@ trait InteractsWithPrism
 
         return array_merge($metadata, $additional);
     }
-
-
 
     /**
      * Convert conversation to a Prism text request with messages pre-populated
