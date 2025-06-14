@@ -24,8 +24,67 @@ class PrismFormatter
             MessageRole::System => new SystemMessage($message->content ?? ''),
             MessageRole::Assistant => new AssistantMessage($message->content ?? ''),
             MessageRole::ToolCall => self::createToolCallMessage($message),
-            MessageRole::ToolResult => self::createToolResultMessage($message),
+            MessageRole::ToolResult => self::createToolResultMessageFromMessage($message),
         };
+    }
+
+    /**
+     * Create a Prism UserMessage
+     */
+    public static function createUserMessage(string $content): UserMessage
+    {
+        return new UserMessage($content);
+    }
+
+    /**
+     * Create a Prism SystemMessage
+     */
+    public static function createSystemMessage(string $content): SystemMessage
+    {
+        return new SystemMessage($content);
+    }
+
+    /**
+     * Create a Prism AssistantMessage
+     */
+    public static function createAssistantMessage(string $content, array $toolCalls = []): AssistantMessage
+    {
+        $prismToolCalls = [];
+        foreach ($toolCalls as $call) {
+            if ($call instanceof ToolCall) {
+                $prismToolCalls[] = $call;
+            } elseif (is_array($call)) {
+                $prismToolCalls[] = new ToolCall(
+                    id: $call['id'] ?? '',
+                    name: $call['name'] ?? '',
+                    arguments: $call['arguments'] ?? []
+                );
+            }
+        }
+
+        return new AssistantMessage($content, $prismToolCalls);
+    }
+
+    /**
+     * Create a Prism ToolResultMessage
+     */
+    public static function createToolResultMessage(array $results): ToolResultMessage
+    {
+        $prismResults = [];
+        foreach ($results as $result) {
+            if ($result instanceof ToolResult) {
+                $prismResults[] = $result;
+            } elseif (is_array($result)) {
+                $prismResults[] = new ToolResult(
+                    toolCallId: $result['toolCallId'] ?? $result['id'] ?? '',
+                    toolName: $result['toolName'] ?? $result['name'] ?? '',
+                    args: $result['args'] ?? $result['arguments'] ?? [],
+                    result: $result['result'] ?? ''
+                );
+            }
+        }
+
+        return new ToolResultMessage($prismResults);
     }
 
     /**
@@ -48,9 +107,9 @@ class PrismFormatter
     }
 
     /**
-     * Create a ToolResultMessage
+     * Create a ToolResultMessage from a Converse Message
      */
-    private static function createToolResultMessage(Message $message): ToolResultMessage
+    private static function createToolResultMessageFromMessage(Message $message): ToolResultMessage
     {
         $toolResultsData = json_decode($message->content, true) ?: [];
         $toolResults = [];

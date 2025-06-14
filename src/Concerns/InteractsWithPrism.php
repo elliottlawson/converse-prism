@@ -110,4 +110,46 @@ trait InteractsWithPrism
 
         return array_merge($metadata, $additional);
     }
+
+    /**
+     * Add a user message and return its Prism representation
+     */
+    public function addUserMessageToPrism(string $content, array $metadata = [])
+    {
+        // Only available on Conversation model
+        if (! method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('addUserMessageToPrism can only be called on Conversation model');
+        }
+
+        $message = $this->addUserMessage($content, $metadata);
+        return PrismFormatter::formatMessage($message);
+    }
+
+    /**
+     * Add a system message and return its Prism representation
+     */
+    public function addSystemMessageToPrism(string $content, array $metadata = [])
+    {
+        // Only available on Conversation model
+        if (! method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('addSystemMessageToPrism can only be called on Conversation model');
+        }
+
+        $message = $this->addSystemMessage($content, $metadata);
+        return PrismFormatter::formatMessage($message);
+    }
+
+    /**
+     * Add an assistant message and return its Prism representation
+     */
+    public function addAssistantMessageToPrism(string $content, array $metadata = [])
+    {
+        // Only available on Conversation model
+        if (! method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('addAssistantMessageToPrism can only be called on Conversation model');
+        }
+
+        $message = $this->addAssistantMessage($content, $metadata);
+        return PrismFormatter::formatMessage($message);
+    }
 }

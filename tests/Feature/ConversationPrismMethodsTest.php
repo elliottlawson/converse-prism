@@ -232,3 +232,64 @@ it('throws exception when calling streamPrismResponse on message model', functio
     expect(fn () => $message->streamPrismResponse())
         ->toThrow(BadMethodCallException::class, 'streamPrismResponse can only be called on Conversation model');
 });
+
+describe('Message Helper Methods', function () {
+    it('adds user message and returns prism format', function () {
+        $prismMessage = $this->conversation->addUserMessageToPrism('Hello world');
+
+        expect($prismMessage)->toBeInstanceOf(UserMessage::class)
+            ->and($prismMessage->content)->toBe('Hello world');
+
+        // Verify message was actually added to conversation
+        $lastMessage = $this->conversation->messages()->latest()->first();
+        expect($lastMessage->content)->toBe('Hello world')
+            ->and($lastMessage->role->value)->toBe('user');
+    });
+
+    it('adds system message and returns prism format', function () {
+        $prismMessage = $this->conversation->addSystemMessageToPrism('You are helpful');
+
+        expect($prismMessage)->toBeInstanceOf(SystemMessage::class)
+            ->and($prismMessage->content)->toBe('You are helpful');
+
+        // Verify message was actually added to conversation
+        $lastMessage = $this->conversation->messages()->latest()->first();
+        expect($lastMessage->content)->toBe('You are helpful')
+            ->and($lastMessage->role->value)->toBe('system');
+    });
+
+    it('adds assistant message and returns prism format', function () {
+        $prismMessage = $this->conversation->addAssistantMessageToPrism('I can help with that');
+
+        expect($prismMessage)->toBeInstanceOf(AssistantMessage::class)
+            ->and($prismMessage->content)->toBe('I can help with that');
+
+        // Verify message was actually added to conversation
+        $lastMessage = $this->conversation->messages()->latest()->first();
+        expect($lastMessage->content)->toBe('I can help with that')
+            ->and($lastMessage->role->value)->toBe('assistant');
+    });
+
+    it('passes metadata to message creation helpers', function () {
+        $metadata = ['model' => 'gpt-4', 'tokens' => 100];
+        
+        $this->conversation->addUserMessageToPrism('Test message', $metadata);
+
+        $lastMessage = $this->conversation->messages()->latest()->first();
+        expect($lastMessage->metadata)->toMatchArray($metadata);
+    });
+
+    it('throws exception when calling helper methods on message model', function () {
+        $this->conversation->addUserMessage('Test');
+        $message = Message::latest()->first();
+
+        expect(fn () => $message->addUserMessageToPrism('test'))
+            ->toThrow(BadMethodCallException::class, 'addUserMessageToPrism can only be called on Conversation model');
+
+        expect(fn () => $message->addSystemMessageToPrism('test'))
+            ->toThrow(BadMethodCallException::class, 'addSystemMessageToPrism can only be called on Conversation model');
+
+        expect(fn () => $message->addAssistantMessageToPrism('test'))
+            ->toThrow(BadMethodCallException::class, 'addAssistantMessageToPrism can only be called on Conversation model');
+    });
+});
