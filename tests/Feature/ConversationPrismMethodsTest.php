@@ -1,13 +1,14 @@
 <?php
 
 /**
- * Feature Tests: Conversation Prism Methods
+ * Feature Tests: Conversation Prism Message Conversion
  *
- * These tests verify that the methods added to Conversation and Message
- * models work correctly:
- * - toPrism() converts messages to Prism format
+ * These tests verify core message conversion functionality:
+ * - toPrism() converts conversation messages to Prism format
+ * - toPrismMessage() converts individual messages to Prism format
  * - addPrismResponse() saves Prism responses as messages
  * - streamPrismResponse() handles streaming responses
+ * - Fluent interface for building conversations
  */
 
 use ElliottLawson\ConversePrism\Models\Conversation;
@@ -15,10 +16,7 @@ use ElliottLawson\ConversePrism\Models\Message;
 use ElliottLawson\ConversePrism\Support\PrismStream;
 use ElliottLawson\ConversePrism\Tests\Models\TestUser;
 use Prism\Prism\Enums\FinishReason;
-use Prism\Prism\Prism;
 use Prism\Prism\Text\PendingRequest as PendingTextRequest;
-use Prism\Prism\Structured\PendingRequest as PendingStructuredRequest;
-use Prism\Prism\Embeddings\PendingRequest as PendingEmbeddingRequest;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\SystemMessage;
 use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
@@ -300,71 +298,66 @@ describe('Message Chaining Methods', function () {
     });
 });
 
-describe('Prism Facade Integration', function () {
-    it('converts conversation to PendingTextRequest with messages', function () {
-        $this->conversation->addSystemMessage('You are helpful');
-        $this->conversation->addUserMessage('Hello world');
-        
-        $pendingRequest = $this->conversation->toPrismText();
-        
-        expect($pendingRequest)->toBeInstanceOf(PendingTextRequest::class);
-        
-        // Verify that the PendingRequest has the correct methods available
-        expect(method_exists($pendingRequest, 'asText'))->toBeTrue();
-        expect(method_exists($pendingRequest, 'using'))->toBeTrue();
+describe('Fluent Interface', function () {
+    it('chains multiple message additions', function () {
+        $builder = $this->conversation
+            ->withSystemMessage('You are a helpful assistant')
+            ->withUserMessage('Hello world')
+            ->withAssistantMessage('Hi there')
+            ->sendToPrism();
+
+        expect($builder)->toBeInstanceOf(\ElliottLawson\ConversePrism\Support\PrismRequestBuilder::class);
+
+        // Verify all messages were added to conversation
+        $messages = $this->conversation->messages()->orderBy('created_at')->get();
+        expect($messages)->toHaveCount(3);
+        expect($messages[0]->role->value)->toBe('system');
+        expect($messages[0]->content)->toBe('You are a helpful assistant');
+        expect($messages[1]->role->value)->toBe('user');
+        expect($messages[1]->content)->toBe('Hello world');
+        expect($messages[2]->role->value)->toBe('assistant');
+        expect($messages[2]->content)->toBe('Hi there');
     });
 
-    it('converts conversation to PendingStructuredRequest with messages', function () {
-        $this->conversation->addSystemMessage('You are helpful');
-        $this->conversation->addUserMessage('Generate a JSON response');
+    it('can configure PrismRequestBuilder fluently', function () {
+        $builder = $this->conversation
+            ->withUserMessage('Test message')
+            ->sendToPrism()
+            ->withMaxTokens(2000);
+
+        expect($builder)->toBeInstanceOf(\ElliottLawson\ConversePrism\Support\PrismRequestBuilder::class);
         
-        $pendingRequest = $this->conversation->toPrismStructured();
-        
-        expect($pendingRequest)->toBeInstanceOf(PendingStructuredRequest::class);
-        
-        // Verify that the PendingRequest has the correct methods available
-        expect(method_exists($pendingRequest, 'using'))->toBeTrue();
-        expect(method_exists($pendingRequest, 'withSchema'))->toBeTrue();
+        // Verify the builder has the expected configuration methods
+        expect(method_exists($builder, 'using'))->toBeTrue();
+        expect(method_exists($builder, 'withMaxTokens'))->toBeTrue();
+        expect(method_exists($builder, 'usingTemperature'))->toBeTrue();
+        expect(method_exists($builder, 'execute'))->toBeTrue();
     });
 
-    it('converts conversation to PendingEmbeddingRequest using last user message', function () {
-        $this->conversation->addUserMessage('First message');
-        $this->conversation->addSystemMessage('System response');
-        $this->conversation->addUserMessage('Second message for embedding');
+    it('passes metadata when using fluent interface', function () {
+        $metadata = ['source' => 'fluent-test'];
         
-        $pendingRequest = $this->conversation->toPrismEmbeddings();
-        
-        expect($pendingRequest)->toBeInstanceOf(PendingEmbeddingRequest::class);
-        
-        // Verify that the PendingRequest has the correct methods available
-        expect(method_exists($pendingRequest, 'fromInput'))->toBeTrue();
-        expect(method_exists($pendingRequest, 'asEmbeddings'))->toBeTrue();
+        $this->conversation->withUserMessage('Test message', $metadata);
+
+        $lastMessage = $this->conversation->messages()->latest()->first();
+        expect($lastMessage->metadata)->toMatchArray($metadata);
     });
 
-    it('allows full Prism API chaining after toPrismText', function () {
-        $this->conversation->addUserMessage('Test message');
-        
-        $pendingRequest = $this->conversation
-            ->toPrismText()
-            ->withMaxTokens(100)
-            ->usingTemperature(0.5);
-            
-        expect($pendingRequest)->toBeInstanceOf(PendingTextRequest::class);
-        expect(method_exists($pendingRequest, 'asText'))->toBeTrue();
-        expect(method_exists($pendingRequest, 'asStream'))->toBeTrue();
-    });
-
-    it('throws exception when calling toPrism methods on message model', function () {
+    it('throws exception when calling fluent methods on message model', function () {
         $this->conversation->addUserMessage('Test');
         $message = Message::latest()->first();
 
-        expect(fn () => $message->toPrismText())
-            ->toThrow(BadMethodCallException::class, 'toPrismText can only be called on Conversation model');
+        expect(fn () => $message->withUserMessage('test'))
+            ->toThrow(BadMethodCallException::class, 'withUserMessage can only be called on Conversation model');
 
-        expect(fn () => $message->toPrismStructured())
-            ->toThrow(BadMethodCallException::class, 'toPrismStructured can only be called on Conversation model');
+        expect(fn () => $message->withSystemMessage('test'))
+            ->toThrow(BadMethodCallException::class, 'withSystemMessage can only be called on Conversation model');
 
-        expect(fn () => $message->toPrismEmbeddings())
-            ->toThrow(BadMethodCallException::class, 'toPrismEmbeddings can only be called on Conversation model');
+        expect(fn () => $message->withAssistantMessage('test'))
+            ->toThrow(BadMethodCallException::class, 'withAssistantMessage can only be called on Conversation model');
+
+        expect(fn () => $message->sendToPrism())
+            ->toThrow(BadMethodCallException::class, 'sendToPrism can only be called on Conversation model');
     });
 });
+
