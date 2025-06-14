@@ -50,7 +50,7 @@ it('converts conversation messages to prism format', function () {
     $this->conversation->addAssistantMessage('Hello human');
     $this->conversation->addSystemMessage('You are helpful');
 
-    $prismMessages = $this->conversation->toPrism();
+    $prismMessages = $this->conversation->toPrismMessages();
 
     expect($prismMessages)->toBeArray()
         ->toHaveCount(3)
@@ -250,7 +250,7 @@ describe('Message Conversion Methods', function () {
 
     it('throws exception when calling toPrismMessage on conversation model', function () {
         expect(fn () => $this->conversation->toPrismMessage())
-            ->toThrow(BadMethodCallException::class, 'toPrismMessage can only be called on Message model. Use toPrism() on Conversation model instead.');
+            ->toThrow(BadMethodCallException::class, 'toPrismMessage can only be called on Message model. Use toPrismMessages() on Conversation model instead.');
     });
 
     it('can convert a conversation to a prism object', function () {

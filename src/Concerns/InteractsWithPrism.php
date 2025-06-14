@@ -12,29 +12,27 @@ use Prism\Prism\Embeddings\PendingRequest as PendingEmbeddingRequest;
 trait InteractsWithPrism
 {
     /**
-     * Convert conversation messages or single message to Prism format
+     * Convert conversation messages to Prism format
      *
-     * @return array|PrismMessage When called on Conversation, returns array of messages. When called on Message, returns single message.
+     * @return array Array of Prism message objects
      */
-    public function toPrism(): mixed
+    public function toPrismMessages(): array
     {
-        // If called on Conversation model
-        if (method_exists($this, 'messages')) {
-            return $this->messages()
-                ->completed()
-                ->orderBy('created_at')
-                ->get()
-                ->map(fn ($message) => PrismFormatter::formatMessage($message))
-                ->toArray();
+        // Only available on Conversation model
+        if (! method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('toPrismMessages can only be called on Conversation model');
         }
 
-        // If called on Message model
-        return PrismFormatter::formatMessage($this);
+        return $this->messages()
+            ->completed()
+            ->orderBy('created_at')
+            ->get()
+            ->map(fn ($message) => PrismFormatter::formatMessage($message))
+            ->toArray();
     }
 
     /**
-     * Convert single message to Prism format (alias for toPrism when called on Message)
-     * This method is designed for method chaining: $conversation->addUserMessage(...)->toPrismMessage()
+     * Convert single message to Prism format
      *
      * @return PrismMessage
      */
@@ -42,7 +40,22 @@ trait InteractsWithPrism
     {
         // Only available on Message model
         if (method_exists($this, 'messages')) {
-            throw new \BadMethodCallException('toPrismMessage can only be called on Message model. Use toPrism() on Conversation model instead.');
+            throw new \BadMethodCallException('toPrismMessage can only be called on Message model. Use toPrismMessages() on Conversation model instead.');
+        }
+
+        return PrismFormatter::formatMessage($this);
+    }
+
+    /**
+     * Alias for toPrismMessage() for backward compatibility
+     *
+     * @return PrismMessage
+     */
+    public function toPrism()
+    {
+        // Only available on Message model
+        if (method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('toPrism can only be called on Message model. Use toPrismMessages() on Conversation model instead.');
         }
 
         return PrismFormatter::formatMessage($this);
@@ -146,7 +159,7 @@ trait InteractsWithPrism
             throw new \BadMethodCallException('toPrismText can only be called on Conversation model');
         }
 
-        return Prism::text()->withMessages($this->toPrism());
+        return Prism::text()->withMessages($this->toPrismMessages());
     }
 
     /**
@@ -159,7 +172,7 @@ trait InteractsWithPrism
             throw new \BadMethodCallException('toPrismStructured can only be called on Conversation model');
         }
 
-        return Prism::structured()->withMessages($this->toPrism());
+        return Prism::structured()->withMessages($this->toPrismMessages());
     }
 
     /**

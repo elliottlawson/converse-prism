@@ -44,7 +44,7 @@ it('can use prism methods on conversations created through the trait', function 
     $conversation->addAssistantMessage('Hi there!');
 
     // Should be able to convert to Prism format
-    $prismMessages = $conversation->toPrism();
+    $prismMessages = $conversation->toPrismMessages();
 
     expect($prismMessages)->toBeArray()
         ->toHaveCount(2)
