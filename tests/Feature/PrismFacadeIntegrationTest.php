@@ -36,11 +36,13 @@ beforeEach(function () {
 });
 
 describe('Prism Text Integration', function () {
-    it('converts conversation to PendingTextRequest with messages', function () {
-        $this->conversation->addSystemMessage('You are helpful');
-        $this->conversation->addUserMessage('Hello world');
-        
-        $pendingRequest = $this->conversation->toPrismText();
+    it('converts conversation to PendingTextRequest with fluent chaining', function () {
+        $pendingRequest = $this->conversation
+            ->addSystemMessage('You are a helpful coding assistant')
+            ->addUserMessage('Write a Python function to calculate fibonacci')
+            ->toPrismText()
+            ->withMaxTokens(500)
+            ->usingTemperature(0.3);
         
         expect($pendingRequest)->toBeInstanceOf(PendingTextRequest::class);
         
@@ -49,23 +51,24 @@ describe('Prism Text Integration', function () {
         expect(method_exists($pendingRequest, 'using'))->toBeTrue();
     });
 
-    it('allows full Prism API chaining after toPrismText', function () {
-        $this->conversation->addUserMessage('Test message');
-        
+    it('demonstrates seamless text generation configuration', function () {
         $pendingRequest = $this->conversation
+            ->addSystemMessage('You are a creative writer')
+            ->addUserMessage('Write a short poem about artificial intelligence')
             ->toPrismText()
-            ->withMaxTokens(100)
-            ->usingTemperature(0.5);
+            ->withMaxTokens(200)
+            ->usingTemperature(0.8)
+            ->usingTopP(0.9);
             
         expect($pendingRequest)->toBeInstanceOf(PendingTextRequest::class);
         expect(method_exists($pendingRequest, 'asText'))->toBeTrue();
         expect(method_exists($pendingRequest, 'asStream'))->toBeTrue();
     });
 
-    it('can be used with fluent message building', function () {
+    it('can be used with fluent message building and provider selection', function () {
         $pendingRequest = $this->conversation
-            ->withSystemMessage('You are a helpful assistant')
-            ->withUserMessage('Write a haiku about coding')
+            ->addSystemMessage('You are a helpful assistant')
+            ->addUserMessage('Write a haiku about coding')
             ->toPrismText()
             ->withMaxTokens(50);
 
@@ -80,11 +83,12 @@ describe('Prism Text Integration', function () {
 });
 
 describe('Prism Structured Integration', function () {
-    it('converts conversation to PendingStructuredRequest with messages', function () {
-        $this->conversation->addSystemMessage('You are helpful');
-        $this->conversation->addUserMessage('Generate a JSON response');
-        
-        $pendingRequest = $this->conversation->toPrismStructured();
+    it('demonstrates structured output with fluent chaining', function () {
+        $pendingRequest = $this->conversation
+            ->addSystemMessage('You are a data analysis assistant')
+            ->addUserMessage('Generate a JSON response with user profile data')
+            ->toPrismStructured()
+            ->withMaxTokens(300);
         
         expect($pendingRequest)->toBeInstanceOf(PendingStructuredRequest::class);
         
@@ -93,11 +97,13 @@ describe('Prism Structured Integration', function () {
         expect(method_exists($pendingRequest, 'withSchema'))->toBeTrue();
     });
 
-    it('can be chained with schema configuration', function () {
+    it('shows complex structured request configuration', function () {
         $pendingRequest = $this->conversation
-            ->withUserMessage('Generate structured data')
+            ->addSystemMessage('You extract structured data from text')
+            ->addUserMessage('Extract key information from this product description')
             ->toPrismStructured()
-            ->withMaxTokens(200);
+            ->withMaxTokens(400)
+            ->usingTemperature(0.1);
 
         expect($pendingRequest)->toBeInstanceOf(PendingStructuredRequest::class);
         expect(method_exists($pendingRequest, 'asStructured'))->toBeTrue();
@@ -105,12 +111,12 @@ describe('Prism Structured Integration', function () {
 });
 
 describe('Prism Embeddings Integration', function () {
-    it('converts conversation to PendingEmbeddingRequest using last user message', function () {
-        $this->conversation->addUserMessage('First message');
-        $this->conversation->addSystemMessage('System response');
-        $this->conversation->addUserMessage('Second message for embedding');
-        
-        $pendingRequest = $this->conversation->toPrismEmbeddings();
+    it('demonstrates embeddings generation with fluent chaining', function () {
+        $pendingRequest = $this->conversation
+            ->addUserMessage('First message')
+            ->addSystemMessage('System response')
+            ->addUserMessage('Document content for semantic search embedding')
+            ->toPrismEmbeddings();
         
         expect($pendingRequest)->toBeInstanceOf(PendingEmbeddingRequest::class);
         
@@ -119,11 +125,12 @@ describe('Prism Embeddings Integration', function () {
         expect(method_exists($pendingRequest, 'asEmbeddings'))->toBeTrue();
     });
 
-    it('can be chained with provider configuration', function () {
+    it('shows embeddings with additional input chaining', function () {
         $pendingRequest = $this->conversation
-            ->withUserMessage('Text to embed')
+            ->addSystemMessage('Processing document for vector database')
+            ->addUserMessage('Main document content to embed')
             ->toPrismEmbeddings()
-            ->fromInput('Additional text');
+            ->fromInput('Additional metadata text');
 
         expect($pendingRequest)->toBeInstanceOf(PendingEmbeddingRequest::class);
     });
@@ -146,36 +153,42 @@ describe('Error Handling', function () {
 });
 
 describe('Integration with Other Features', function () {
-    it('works seamlessly with sendToPrism fluent interface', function () {
-        // Show that both approaches can coexist
-        $this->conversation->withUserMessage('Hello');
-        
-        // Method 1: Direct Prism facade access
-        $prismRequest = $this->conversation->toPrismText();
+    it('demonstrates both direct facade and custom builder approaches', function () {
+        // Method 1: Direct Prism facade access with chaining
+        $prismRequest = $this->conversation
+            ->addSystemMessage('You are a helpful assistant')
+            ->addUserMessage('Hello, how can you help?')
+            ->toPrismText()
+            ->withMaxTokens(100);
         expect($prismRequest)->toBeInstanceOf(PendingTextRequest::class);
         
-        // Method 2: Our custom builder
-        $builderRequest = $this->conversation->sendToPrism();
-        expect($builderRequest)->toBeInstanceOf(\ElliottLawson\ConversePrism\Support\PrismRequestBuilder::class);
+        // Method 2: Our custom builder approach
+        $builderRequest = $this->conversation
+            ->addUserMessage('Follow-up question')
+            ->toPrismText()
+            ->withMaxTokens(150);
+        expect($builderRequest)->toBeInstanceOf(PendingTextRequest::class);
     });
 
-    it('maintains conversation state across different integrations', function () {
-        $this->conversation
-            ->withSystemMessage('You are helpful')
-            ->withUserMessage('Question 1');
-            
-        // Convert to Prism facade
-        $prismRequest = $this->conversation->toPrismText();
+    it('maintains conversation state across chained operations', function () {
+        // Convert to Prism facade with chaining
+        $prismRequest = $this->conversation
+            ->addSystemMessage('You are helpful')
+            ->addUserMessage('Question 1')
+            ->toPrismText()
+            ->withMaxTokens(200);
         
-        // Add more messages
-        $this->conversation->withUserMessage('Question 2');
+        // Add more messages and create new request
+        $newPrismRequest = $this->conversation
+            ->addUserMessage('Question 2')
+            ->toPrismText()
+            ->usingTemperature(0.7);
         
         // Verify state is maintained
         $messages = $this->conversation->messages()->orderBy('created_at')->get();
-        expect($messages)->toHaveCount(3);
+        expect($messages)->toHaveCount(3); // system + user1 + user2
         
-        // New Prism request includes all messages
-        $newPrismRequest = $this->conversation->toPrismText();
+        // Both requests should be valid
         expect($newPrismRequest)->toBeInstanceOf(PendingTextRequest::class);
     });
 });

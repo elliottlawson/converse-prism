@@ -68,7 +68,8 @@ it('handles a complete Prism text response with all metadata', function () {
         }
     };
 
-    $message = $this->conversation->addPrismResponse($prismResponse);
+    $this->conversation->addPrismResponse($prismResponse);
+    $message = $this->conversation->messages()->latest()->first();
 
     expect($message->role->value)->toBe('assistant')
         ->and($message->content)->toBe('This is the assistant response')
@@ -148,7 +149,8 @@ it('handles Prism tool call responses correctly', function () {
         }
     };
 
-    $message = $this->conversation->addPrismResponse($prismResponse);
+    $this->conversation->addPrismResponse($prismResponse);
+    $message = $this->conversation->messages()->latest()->first();
 
     expect($message->role->value)->toBe('tool_call')
         ->and($message->content)->toBeJson()
@@ -225,7 +227,8 @@ it('handles empty tool arguments correctly', function () {
         ];
     };
 
-    $message = $this->conversation->addPrismResponse($prismResponse);
+    $this->conversation->addPrismResponse($prismResponse);
+    $message = $this->conversation->messages()->latest()->first();
 
     $storedToolCalls = json_decode($message->content, true);
     expect($storedToolCalls[0]['arguments'])->toBe('{}');
@@ -249,7 +252,8 @@ it('handles multi-step Prism responses', function () {
         }
     };
 
-    $message = $this->conversation->addPrismResponse($prismResponse);
+    $this->conversation->addPrismResponse($prismResponse);
+    $message = $this->conversation->messages()->latest()->first();
 
     expect($message->metadata['steps'])->toBe(3)
         ->and($message->metadata['tokens'])->toBe(150);  // calculated: 100 + 50
@@ -261,7 +265,8 @@ it('correctly handles missing or null Prism response fields', function () {
         public $text = 'Response with minimal data';
     };
 
-    $message = $this->conversation->addPrismResponse($minimalResponse);
+    $this->conversation->addPrismResponse($minimalResponse);
+    $message = $this->conversation->messages()->latest()->first();
 
     expect($message->content)->toBe('Response with minimal data')
         ->and($message->metadata)->toBe([]);

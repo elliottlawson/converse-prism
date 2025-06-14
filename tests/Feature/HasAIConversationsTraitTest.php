@@ -77,12 +77,14 @@ it('maintains all original converse functionality', function () {
     ]);
 
     // All original methods should work
-    $userMessage = $conversation->addUserMessage('Test message');
-    $assistantMessage = $conversation->addAssistantMessage('Response');
+    $conversation->addUserMessage('Test message');
+    $conversation->addAssistantMessage('Response');
 
     expect($conversation->messages)->toHaveCount(2)
         ->and($conversation->title)->toBe('Test')
-        ->and($conversation->metadata)->toMatchArray(['custom' => 'data'])
-        ->and($userMessage->role->value)->toBe('user')
-        ->and($assistantMessage->role->value)->toBe('assistant');
+        ->and($conversation->metadata)->toMatchArray(['custom' => 'data']);
+    
+    $messages = $conversation->messages()->orderBy('created_at')->get();
+    expect($messages[0]->role->value)->toBe('user')
+        ->and($messages[1]->role->value)->toBe('assistant');
 });

@@ -3,7 +3,6 @@
 namespace ElliottLawson\ConversePrism\Concerns;
 
 use ElliottLawson\ConversePrism\Support\PrismFormatter;
-use ElliottLawson\ConversePrism\Support\PrismRequestBuilder;
 use ElliottLawson\ConversePrism\Support\PrismStream;
 use Prism\Prism\Prism;
 use Prism\Prism\Text\PendingRequest as PendingTextRequest;
@@ -52,9 +51,9 @@ trait InteractsWithPrism
     /**
      * Add a Prism response to the conversation
      *
-     * @return \ElliottLawson\Converse\Models\Message
+     * @return self Returns the conversation for fluent chaining
      */
-    public function addPrismResponse($response, array $metadata = [])
+    public function addPrismResponse($response, array $metadata = []): self
     {
         // Only available on Conversation model
         if (! method_exists($this, 'messages')) {
@@ -63,25 +62,28 @@ trait InteractsWithPrism
 
         // Handle tool calls
         if (isset($response->toolCalls) && filled($response->toolCalls)) {
-            return $this->addToolCallMessage(
+            $this->addToolCallMessage(
                 json_encode($response->toolCalls),
                 $this->extractPrismMetadata($response, $metadata)
             );
+            return $this;
         }
 
         // Handle tool results
         if (isset($response->toolResults) && filled($response->toolResults)) {
-            return $this->addToolResultMessage(
+            $this->addToolResultMessage(
                 json_encode($response->toolResults),
                 $this->extractPrismMetadata($response, $metadata)
             );
+            return $this;
         }
 
         // Standard assistant message
-        return $this->addAssistantMessage(
+        $this->addAssistantMessage(
             $response->text ?? '',
             $this->extractPrismMetadata($response, $metadata)
         );
+        return $this;
     }
 
     /**
@@ -132,60 +134,7 @@ trait InteractsWithPrism
         return array_merge($metadata, $additional);
     }
 
-    /**
-     * Fluent interface: Add a system message and return conversation for chaining
-     */
-    public function withSystemMessage(string $content, array $metadata = []): self
-    {
-        // Only available on Conversation model
-        if (! method_exists($this, 'messages')) {
-            throw new \BadMethodCallException('withSystemMessage can only be called on Conversation model');
-        }
 
-        $this->addSystemMessage($content, $metadata);
-        return $this;
-    }
-
-    /**
-     * Fluent interface: Add a user message and return conversation for chaining
-     */
-    public function withUserMessage(string $content, array $metadata = []): self
-    {
-        // Only available on Conversation model
-        if (! method_exists($this, 'messages')) {
-            throw new \BadMethodCallException('withUserMessage can only be called on Conversation model');
-        }
-
-        $this->addUserMessage($content, $metadata);
-        return $this;
-    }
-
-    /**
-     * Fluent interface: Add an assistant message and return conversation for chaining
-     */
-    public function withAssistantMessage(string $content, array $metadata = []): self
-    {
-        // Only available on Conversation model
-        if (! method_exists($this, 'messages')) {
-            throw new \BadMethodCallException('withAssistantMessage can only be called on Conversation model');
-        }
-
-        $this->addAssistantMessage($content, $metadata);
-        return $this;
-    }
-
-    /**
-     * Fluent interface: Start a Prism request with the conversation messages
-     */
-    public function sendToPrism(): PrismRequestBuilder
-    {
-        // Only available on Conversation model
-        if (! method_exists($this, 'messages')) {
-            throw new \BadMethodCallException('sendToPrism can only be called on Conversation model');
-        }
-
-        return new PrismRequestBuilder($this);
-    }
 
     /**
      * Convert conversation to a Prism text request with messages pre-populated
@@ -233,5 +182,4 @@ trait InteractsWithPrism
 
         return Prism::embeddings()->fromInput($input);
     }
-
 }
