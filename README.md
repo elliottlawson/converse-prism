@@ -1,6 +1,6 @@
-# Laravel Converse-Prism Integration Package
+# Laravel Converse-Prism Integration
 
-Seamless integration between Laravel Converse and Prism PHP for AI conversations. This package provides a fluent API to convert conversation messages to Prism format and save Prism responses back to Converse, supporting both standard and streaming responses.
+Seamless integration between Laravel Converse and Prism PHP for AI conversations. This package extends Laravel Converse with a fluent API to work directly with Prism, supporting both standard and streaming responses.
 
 ## Installation
 
@@ -12,21 +12,22 @@ composer require elliottlawson/converse-prism
 
 - PHP 8.2+
 - Laravel 11.0+ or 12.0+
-- [Prism PHP](https://github.com/echolabsdev/prism) - A powerful Laravel package for integrating Large Language Models
+- [Laravel Converse](https://github.com/elliottlawson/converse) ^0.1
+- [Prism PHP](https://github.com/echolabsdev/prism) ^0.71
 
 ## Features
 
-- **Drop-in Replacement**: Just swap the trait in your User model - no other changes needed
-- **Fluid API**: Natural Laravel-style methods on Conversation and Message models
-- **Automatic Format Translation**: Converts between Converse and Prism message formats
+- **Fluent Interface**: Chain conversation building with Prism API calls
+- **Direct Prism Integration**: Get pre-configured Prism request objects
+- **Automatic Format Translation**: Seamlessly convert between Converse and Prism message formats
 - **Streaming Support**: Elegant handling of Prism streaming responses
 - **Metadata Preservation**: Automatically extracts and stores token counts, models, etc.
-- **Type Safety**: Handles all Prism response types correctly
+- **Type Safety**: Full return type declarations and proper handling of all Prism response types
 - **Backwards Compatible**: All existing Converse functionality continues to work
 
 ## Setup
 
-Add the HasAIConversations trait to your User model:
+Replace the Converse trait with the ConversePrism trait in your User model:
 
 ```php
 // app/Models/User.php
@@ -40,240 +41,323 @@ class User extends Authenticatable
 }
 ```
 
-### Upgrading from Converse
-
-If you're already using Laravel Converse, just change the trait namespace from `ElliottLawson\Converse\Traits\HasAIConversations` to `ElliottLawson\ConversePrism\Concerns\HasAIConversations`. That's it!
+That's it! All your existing Converse code continues to work, plus you get Prism superpowers.
 
 ## Usage
 
-### Basic Example
+### Fluent Conversation Building with Prism
+
+The most powerful feature is the ability to fluently build conversations and get Prism request objects:
 
 ```php
-use Prism\Prism;
 use Prism\Enums\Provider;
 
-// Create a conversation as usual
-$conversation = $user->startConversation(['title' => 'Chat']);
-
-// Add a user message
-$conversation->addUserMessage('What is the weather in Paris?');
-
-// Convert messages to Prism format and get AI response
-$response = Prism::text()
+// Build and send in one fluent chain
+$response = $user->startConversation(['title' => 'Code Review'])
+    ->addSystemMessage('You are a senior Laravel developer providing code reviews')
+    ->addUserMessage('Review this controller method for best practices')
+    ->addUserMessage($codeSnippet)
+    ->toPrismText()
     ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
-    ->withMessages($conversation->toPrism())
+    ->withMaxTokens(1000)
+    ->withTemperature(0.2)
     ->generate();
 
-// Save the response with automatic metadata extraction
+// Add the response back to the conversation
 $conversation->addPrismResponse($response);
+```
+
+### Direct Prism Facade Integration
+
+The package provides three methods that return configured Prism request objects:
+
+#### Text Generation
+```php
+$conversation = $user->conversations()->find($id);
+
+// Get a PendingTextRequest with messages pre-populated
+$request = $conversation
+    ->addUserMessage('Explain quantum computing')
+    ->toPrismText()
+    ->using(Provider::OpenAI, 'gpt-4')
+    ->withMaxTokens(500);
+
+// You have full access to all Prism methods
+$response = $request
+    ->withTemperature(0.7)
+    ->withTopP(0.9)
+    ->withPresencePenalty(0.1)
+    ->generate();
+```
+
+#### Structured Output
+```php
+$productSchema = [
+    'type' => 'object',
+    'properties' => [
+        'name' => ['type' => 'string'],
+        'price' => ['type' => 'number'],
+        'inStock' => ['type' => 'boolean']
+    ]
+];
+
+$response = $conversation
+    ->addSystemMessage('Extract product information from user messages')
+    ->addUserMessage('The new iPhone 15 Pro costs $999 and is available now')
+    ->toPrismStructured()
+    ->using(Provider::OpenAI, 'gpt-4')
+    ->withSchema($productSchema)
+    ->generate();
+
+// Save the structured response
+$conversation->addPrismResponse($response);
+```
+
+#### Embeddings
+```php
+// Generate embeddings for the last user message
+$embeddings = $conversation
+    ->addUserMessage('What is the meaning of life?')
+    ->toPrismEmbeddings()
+    ->using(Provider::OpenAI, 'text-embedding-3-small')
+    ->generate();
+```
+
+### Message Format Conversion
+
+The package automatically converts between Converse and Prism message formats:
+
+```php
+// Get all messages as Prism message objects
+$prismMessages = $conversation->toPrismMessages();
+// Returns array of typed Prism message objects:
+// [
+//     SystemMessage { content: "You are helpful" },
+//     UserMessage { content: "Hello" },
+//     AssistantMessage { content: "Hi there!" }
+// ]
+
+// Convert a single message
+$message = $conversation->messages()->latest()->first();
+$prismMessage = $message->toPrismMessage();
+// Returns: UserMessage { content: "Hello" }
 ```
 
 ### Streaming Responses
 
+Handle streaming responses elegantly with automatic chunk storage:
+
 ```php
-// Start streaming
 $stream = $conversation->streamPrismResponse([
     'model' => 'claude-3-5-sonnet-latest',
     'provider' => 'anthropic',
 ]);
 
-// Stream with Prism
-$response = Prism::text()
+$response = $conversation
+    ->toPrismText()
     ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
-    ->withMessages($conversation->toPrism())
     ->stream(function ($chunk) use ($stream) {
         $stream->append($chunk);
         
         // Optionally broadcast to frontend
-        broadcast(new ChunkReceived($stream->getMessage(), $chunk));
+        broadcast(new StreamUpdate($stream->getMessage(), $chunk));
     });
 
 // Complete the stream
 $message = $stream->complete($response);
 ```
 
-### Type-Safe Message Conversion
+### Tool/Function Calling
 
-This package automatically converts Converse messages to Prism's typed message objects:
-
-```php
-// What you get back from toPrism()
-$prismMessages = $conversation->toPrism();
-// Returns: [
-//     UserMessage { content: "What's the weather?" },
-//     AssistantMessage { content: "", toolCalls: [...] },
-//     ToolResultMessage { toolResults: [...] },
-//     AssistantMessage { content: "It's sunny and 72°F" }
-// ]
-```
-
-#### Message Type Mapping
-
-| Converse Role | Prism Message Type | Properties |
-|--------------|-------------------|-----------|
-| `User` | `UserMessage` | `content: string` |
-| `Assistant` | `AssistantMessage` | `content: string`, `toolCalls: array` |
-| `System` | `SystemMessage` | `content: string` |
-| `ToolCall` | `AssistantMessage` | `content: ""`, `toolCalls: ToolCall[]` |
-| `ToolResult` | `ToolResultMessage` | `toolResults: ToolResult[]` |
-
-#### Real Example
+The package correctly handles Prism's tool calls and results:
 
 ```php
-use Prism\Prism\ValueObjects\Messages\UserMessage;
-use Prism\Prism\ValueObjects\Messages\AssistantMessage;
+$weatherTool = Tool::create([
+    'name' => 'get_weather',
+    'description' => 'Get current weather for a location',
+    'parameters' => [
+        'type' => 'object',
+        'properties' => [
+            'location' => ['type' => 'string', 'description' => 'City name'],
+            'unit' => ['type' => 'string', 'enum' => ['celsius', 'fahrenheit']]
+        ],
+        'required' => ['location']
+    ]
+]);
 
-// Build a conversation
-$conversation->addUserMessage('Calculate 15% tip on $42.50');
-$conversation->addAssistantMessage('A 15% tip on $42.50 would be $6.38');
-
-// Convert to Prism format
-$messages = $conversation->toPrism();
-
-// You get actual Prism message objects!
-$messages[0] // UserMessage { content: "Calculate 15% tip on $42.50" }
-$messages[1] // AssistantMessage { content: "A 15% tip on $42.50 would be $6.38" }
-
-// Use directly with Prism - no array building needed!
-$response = Prism::text()
-    ->using(Provider::OpenAI, 'gpt-4')
-    ->withMessages($messages) // Prism accepts these typed objects
-    ->generate();
-```
-
-### Handling Tool Calls
-
-```php
-// Prism response with tool calls
-$response = Prism::text()
+// Make request with tools
+$response = $conversation
+    ->addUserMessage('What\'s the weather in Paris?')
+    ->toPrismText()
     ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
-    ->withMessages($conversation->toPrism())
     ->withTools([$weatherTool])
     ->generate();
 
-// Automatically saves as tool call message
-$message = $conversation->addPrismResponse($response);
-// If response has toolCalls, creates a ToolCall message
-// If response has toolResults, creates a ToolResult message
+// Automatically detects and saves tool calls
+$conversation->addPrismResponse($response);
+// Creates a tool_call message if response contains toolCalls
+
+// Add tool result and continue
+$conversation->addToolResultMessage(json_encode([
+    'temperature' => 22,
+    'condition' => 'sunny',
+    'unit' => 'celsius'
+]));
+
+// Continue the conversation
+$finalResponse = $conversation
+    ->toPrismText()
+    ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
+    ->generate();
+
+$conversation->addPrismResponse($finalResponse);
+// "The weather in Paris is currently sunny with a temperature of 22°C."
 ```
 
-### Error Handling with Streaming
+### Complete Example: Building a Chat Interface
 
 ```php
-$stream = $conversation->streamPrismResponse();
+namespace App\Http\Controllers;
 
-try {
-    Prism::text()
-        ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
-        ->withMessages($conversation->toPrism())
-        ->stream(function ($chunk) use ($stream) {
-            $stream->append($chunk);
-        });
-        
-    $message = $stream->complete($response);
-} catch (\Exception $e) {
-    $message = $stream->fail($e->getMessage(), [
-        'error_type' => get_class($e),
-        'provider' => 'anthropic',
-    ]);
-}
-```
-
-### Complete Example with Error Handling
-
-```php
-use App\Models\User;
-use Prism\Prism\Prism;
-use Prism\Prism\Enums\Provider;
+use App\Models\Conversation;
+use Illuminate\Http\Request;
+use Prism\Enums\Provider;
 
 class ChatController extends Controller
 {
-    public function sendMessage(Request $request, Conversation $conversation)
+    public function store(Request $request)
     {
-        // Add user message
-        $conversation->addUserMessage($request->input('message'));
+        $conversation = auth()->user()->startConversation([
+            'title' => $request->input('title', 'New Chat'),
+            'metadata' => ['source' => 'web']
+        ]);
         
-        // Convert history for Prism
-        $messages = $conversation->toPrism();
+        // Set up the conversation context
+        $response = $conversation
+            ->addSystemMessage('You are a helpful AI assistant')
+            ->addUserMessage($request->input('message'))
+            ->toPrismText()
+            ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
+            ->withMaxTokens(1000)
+            ->generate();
+            
+        $conversation->addPrismResponse($response);
         
-        try {
-            if ($request->input('stream', false)) {
-                // Streaming response
-                $stream = $conversation->streamPrismResponse([
-                    'user_id' => auth()->id(),
-                    'ip' => $request->ip(),
-                ]);
-                
-                $response = Prism::text()
+        return response()->json([
+            'conversation' => $conversation->fresh()->load('messages'),
+            'message' => $conversation->lastMessage
+        ]);
+    }
+    
+    public function update(Request $request, Conversation $conversation)
+    {
+        // Ensure user owns the conversation
+        $this->authorize('update', $conversation);
+        
+        // Continue the conversation
+        if ($request->boolean('stream')) {
+            return $this->streamResponse($request, $conversation);
+        }
+        
+        $response = $conversation
+            ->addUserMessage($request->input('message'))
+            ->toPrismText()
+            ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
+            ->withMaxTokens(1000)
+            ->generate();
+            
+        $conversation->addPrismResponse($response, [
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent()
+        ]);
+        
+        return response()->json([
+            'message' => $conversation->lastMessage
+        ]);
+    }
+    
+    protected function streamResponse(Request $request, Conversation $conversation)
+    {
+        $stream = $conversation->streamPrismResponse();
+        
+        return response()->stream(function () use ($request, $conversation, $stream) {
+            try {
+                $response = $conversation
+                    ->addUserMessage($request->input('message'))
+                    ->toPrismText()
                     ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
-                    ->withMessages($messages)
                     ->stream(function ($chunk) use ($stream) {
                         $stream->append($chunk);
+                        echo "data: " . json_encode(['chunk' => $chunk]) . "\n\n";
+                        ob_flush();
+                        flush();
                     });
                     
                 $message = $stream->complete($response);
-            } else {
-                // Standard response
-                $response = Prism::text()
-                    ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
-                    ->withMessages($messages)
-                    ->generate();
-                    
-                $message = $conversation->addPrismResponse($response, [
-                    'user_id' => auth()->id(),
-                    'ip' => $request->ip(),
-                ]);
-            }
-            
-            return response()->json([
-                'message' => $message,
-                'conversation_id' => $conversation->uuid,
-            ]);
-            
-        } catch (\Exception $e) {
-            // Handle errors
-            if (isset($stream)) {
+                echo "data: " . json_encode(['done' => true, 'message' => $message]) . "\n\n";
+                
+            } catch (\Exception $e) {
                 $stream->fail($e->getMessage());
+                echo "data: " . json_encode(['error' => $e->getMessage()]) . "\n\n";
             }
-            
-            return response()->json([
-                'error' => 'Failed to generate response',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
+        }, 200, [
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
+        ]);
     }
 }
 ```
 
-## Available Methods
+## API Reference
 
-### On Conversation Model
+### Conversation Methods
 
-- `toPrism()` - Convert all completed messages to Prism format
-- `addPrismResponse($response, $metadata = [])` - Add a Prism response as a message
-- `streamPrismResponse($metadata = [])` - Start a streaming response
+```php
+// Convert messages to Prism format
+$messages = $conversation->toPrismMessages(); // Returns array of Prism message objects
 
-### On Message Model
+// Get pre-configured Prism request objects
+$textRequest = $conversation->toPrismText();           // Returns PendingTextRequest
+$structuredRequest = $conversation->toPrismStructured(); // Returns PendingStructuredRequest  
+$embeddingsRequest = $conversation->toPrismEmbeddings(); // Returns PendingEmbeddingRequest
 
-- `toPrism()` - Convert a single message to Prism format
+// Add Prism responses
+$conversation->addPrismResponse($response, $metadata = []); // Returns self for chaining
+
+// Handle streaming
+$stream = $conversation->streamPrismResponse($metadata = []); // Returns PrismStream
+```
+
+### Message Methods
+
+```php
+// Convert single message to Prism format
+$prismMessage = $message->toPrismMessage(); // Returns PrismMessage
+```
 
 ### PrismStream Methods
 
-- `append($chunk)` - Append a chunk to the streaming message
-- `complete($prismResponse = null)` - Complete the streaming response
-- `fail($error, $errorMetadata = [])` - Fail the streaming response
-- `getMessage()` - Get the underlying message instance
+```php
+$stream->append($chunk);                    // Append a chunk
+$stream->complete($prismResponse = null);   // Complete streaming
+$stream->fail($error, $errorMetadata = []); // Handle failure
+$stream->getMessage();                      // Get underlying message
+```
 
 ## Metadata Extraction
 
-The package automatically extracts and stores the following metadata from Prism responses:
+The package automatically extracts and stores metadata from Prism responses:
 
-- Token usage (total, prompt, completion)
-- Model information
-- Provider request ID
-- Finish reason
-- Number of steps (for multi-step responses)
-- Streaming metadata (chunks, duration)
+- **Token Usage**: `prompt_tokens`, `completion_tokens`, `tokens` (total)
+- **Model Information**: `model`, `provider_request_id`
+- **Response Details**: `finish_reason`, `steps` (for multi-step)
+- **Streaming Info**: `stream_chunks`, `stream_duration`
+
+```php
+$conversation->addPrismResponse($response, [
+    'custom_field' => 'value' // Your metadata is merged with extracted data
+]);
+```
 
 ## Testing
 
