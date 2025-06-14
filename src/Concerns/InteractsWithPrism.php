@@ -5,6 +5,10 @@ namespace ElliottLawson\ConversePrism\Concerns;
 use ElliottLawson\ConversePrism\Support\PrismFormatter;
 use ElliottLawson\ConversePrism\Support\PrismRequestBuilder;
 use ElliottLawson\ConversePrism\Support\PrismStream;
+use Prism\Prism\Prism;
+use Prism\Prism\Text\PendingRequest as PendingTextRequest;
+use Prism\Prism\Structured\PendingRequest as PendingStructuredRequest;
+use Prism\Prism\Embeddings\PendingRequest as PendingEmbeddingRequest;
 
 trait InteractsWithPrism
 {
@@ -181,6 +185,53 @@ trait InteractsWithPrism
         }
 
         return new PrismRequestBuilder($this);
+    }
+
+    /**
+     * Convert conversation to a Prism text request with messages pre-populated
+     */
+    public function toPrismText(): PendingTextRequest
+    {
+        // Only available on Conversation model
+        if (! method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('toPrismText can only be called on Conversation model');
+        }
+
+        return Prism::text()->withMessages($this->toPrism());
+    }
+
+    /**
+     * Convert conversation to a Prism structured request with messages pre-populated
+     */
+    public function toPrismStructured(): PendingStructuredRequest
+    {
+        // Only available on Conversation model
+        if (! method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('toPrismStructured can only be called on Conversation model');
+        }
+
+        return Prism::structured()->withMessages($this->toPrism());
+    }
+
+    /**
+     * Convert conversation to a Prism embeddings request
+     */
+    public function toPrismEmbeddings(): PendingEmbeddingRequest
+    {
+        // Only available on Conversation model
+        if (! method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('toPrismEmbeddings can only be called on Conversation model');
+        }
+
+        // For embeddings, we'll use the last user message content as the input
+        $lastUserMessage = $this->messages()
+            ->where('role', \ElliottLawson\Converse\Enums\MessageRole::User)
+            ->latest()
+            ->first();
+
+        $input = $lastUserMessage ? $lastUserMessage->content : '';
+
+        return Prism::embeddings()->fromInput($input);
     }
 
 }
