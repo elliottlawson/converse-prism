@@ -28,64 +28,6 @@ class PrismFormatter
         };
     }
 
-    /**
-     * Create a Prism UserMessage
-     */
-    public static function createUserMessage(string $content): UserMessage
-    {
-        return new UserMessage($content);
-    }
-
-    /**
-     * Create a Prism SystemMessage
-     */
-    public static function createSystemMessage(string $content): SystemMessage
-    {
-        return new SystemMessage($content);
-    }
-
-    /**
-     * Create a Prism AssistantMessage
-     */
-    public static function createAssistantMessage(string $content, array $toolCalls = []): AssistantMessage
-    {
-        $prismToolCalls = [];
-        foreach ($toolCalls as $call) {
-            if ($call instanceof ToolCall) {
-                $prismToolCalls[] = $call;
-            } elseif (is_array($call)) {
-                $prismToolCalls[] = new ToolCall(
-                    id: $call['id'] ?? '',
-                    name: $call['name'] ?? '',
-                    arguments: $call['arguments'] ?? []
-                );
-            }
-        }
-
-        return new AssistantMessage($content, $prismToolCalls);
-    }
-
-    /**
-     * Create a Prism ToolResultMessage
-     */
-    public static function createToolResultMessage(array $results): ToolResultMessage
-    {
-        $prismResults = [];
-        foreach ($results as $result) {
-            if ($result instanceof ToolResult) {
-                $prismResults[] = $result;
-            } elseif (is_array($result)) {
-                $prismResults[] = new ToolResult(
-                    toolCallId: $result['toolCallId'] ?? $result['id'] ?? '',
-                    toolName: $result['toolName'] ?? $result['name'] ?? '',
-                    args: $result['args'] ?? $result['arguments'] ?? [],
-                    result: $result['result'] ?? ''
-                );
-            }
-        }
-
-        return new ToolResultMessage($prismResults);
-    }
 
     /**
      * Create an AssistantMessage with tool calls

@@ -3,6 +3,7 @@
 namespace ElliottLawson\ConversePrism\Concerns;
 
 use ElliottLawson\ConversePrism\Support\PrismFormatter;
+use ElliottLawson\ConversePrism\Support\PrismRequestBuilder;
 use ElliottLawson\ConversePrism\Support\PrismStream;
 
 trait InteractsWithPrism
@@ -25,6 +26,22 @@ trait InteractsWithPrism
         }
 
         // If called on Message model
+        return PrismFormatter::formatMessage($this);
+    }
+
+    /**
+     * Convert single message to Prism format (alias for toPrism when called on Message)
+     * This method is designed for method chaining: $conversation->addUserMessage(...)->toPrismMessage()
+     *
+     * @return PrismMessage
+     */
+    public function toPrismMessage()
+    {
+        // Only available on Message model
+        if (method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('toPrismMessage can only be called on Message model. Use toPrism() on Conversation model instead.');
+        }
+
         return PrismFormatter::formatMessage($this);
     }
 
@@ -112,44 +129,58 @@ trait InteractsWithPrism
     }
 
     /**
-     * Add a user message and return its Prism representation
+     * Fluent interface: Add a system message and return conversation for chaining
      */
-    public function addUserMessageToPrism(string $content, array $metadata = [])
+    public function withSystemMessage(string $content, array $metadata = []): self
     {
         // Only available on Conversation model
         if (! method_exists($this, 'messages')) {
-            throw new \BadMethodCallException('addUserMessageToPrism can only be called on Conversation model');
+            throw new \BadMethodCallException('withSystemMessage can only be called on Conversation model');
         }
 
-        $message = $this->addUserMessage($content, $metadata);
-        return PrismFormatter::formatMessage($message);
+        $this->addSystemMessage($content, $metadata);
+        return $this;
     }
 
     /**
-     * Add a system message and return its Prism representation
+     * Fluent interface: Add a user message and return conversation for chaining
      */
-    public function addSystemMessageToPrism(string $content, array $metadata = [])
+    public function withUserMessage(string $content, array $metadata = []): self
     {
         // Only available on Conversation model
         if (! method_exists($this, 'messages')) {
-            throw new \BadMethodCallException('addSystemMessageToPrism can only be called on Conversation model');
+            throw new \BadMethodCallException('withUserMessage can only be called on Conversation model');
         }
 
-        $message = $this->addSystemMessage($content, $metadata);
-        return PrismFormatter::formatMessage($message);
+        $this->addUserMessage($content, $metadata);
+        return $this;
     }
 
     /**
-     * Add an assistant message and return its Prism representation
+     * Fluent interface: Add an assistant message and return conversation for chaining
      */
-    public function addAssistantMessageToPrism(string $content, array $metadata = [])
+    public function withAssistantMessage(string $content, array $metadata = []): self
     {
         // Only available on Conversation model
         if (! method_exists($this, 'messages')) {
-            throw new \BadMethodCallException('addAssistantMessageToPrism can only be called on Conversation model');
+            throw new \BadMethodCallException('withAssistantMessage can only be called on Conversation model');
         }
 
-        $message = $this->addAssistantMessage($content, $metadata);
-        return PrismFormatter::formatMessage($message);
+        $this->addAssistantMessage($content, $metadata);
+        return $this;
     }
+
+    /**
+     * Fluent interface: Start a Prism request with the conversation messages
+     */
+    public function sendToPrism(): PrismRequestBuilder
+    {
+        // Only available on Conversation model
+        if (! method_exists($this, 'messages')) {
+            throw new \BadMethodCallException('sendToPrism can only be called on Conversation model');
+        }
+
+        return new PrismRequestBuilder($this);
+    }
+
 }

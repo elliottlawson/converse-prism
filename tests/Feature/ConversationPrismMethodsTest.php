@@ -233,63 +233,65 @@ it('throws exception when calling streamPrismResponse on message model', functio
         ->toThrow(BadMethodCallException::class, 'streamPrismResponse can only be called on Conversation model');
 });
 
-describe('Message Helper Methods', function () {
-    it('adds user message and returns prism format', function () {
-        $prismMessage = $this->conversation->addUserMessageToPrism('Hello world');
+describe('Fluent Interface', function () {
+    it('chains multiple message additions', function () {
+        $builder = $this->conversation
+            ->withSystemMessage('You are a helpful assistant')
+            ->withUserMessage('Hello world')
+            ->withAssistantMessage('Hi there')
+            ->sendToPrism();
 
-        expect($prismMessage)->toBeInstanceOf(UserMessage::class)
-            ->and($prismMessage->content)->toBe('Hello world');
+        expect($builder)->toBeInstanceOf(\ElliottLawson\ConversePrism\Support\PrismRequestBuilder::class);
 
-        // Verify message was actually added to conversation
-        $lastMessage = $this->conversation->messages()->latest()->first();
-        expect($lastMessage->content)->toBe('Hello world')
-            ->and($lastMessage->role->value)->toBe('user');
+        // Verify all messages were added to conversation
+        $messages = $this->conversation->messages()->orderBy('created_at')->get();
+        expect($messages)->toHaveCount(3);
+        expect($messages[0]->role->value)->toBe('system');
+        expect($messages[0]->content)->toBe('You are a helpful assistant');
+        expect($messages[1]->role->value)->toBe('user');
+        expect($messages[1]->content)->toBe('Hello world');
+        expect($messages[2]->role->value)->toBe('assistant');
+        expect($messages[2]->content)->toBe('Hi there');
     });
 
-    it('adds system message and returns prism format', function () {
-        $prismMessage = $this->conversation->addSystemMessageToPrism('You are helpful');
+    it('can configure PrismRequestBuilder fluently', function () {
+        $builder = $this->conversation
+            ->withUserMessage('Test message')
+            ->sendToPrism()
+            ->withMaxTokens(2000);
 
-        expect($prismMessage)->toBeInstanceOf(SystemMessage::class)
-            ->and($prismMessage->content)->toBe('You are helpful');
-
-        // Verify message was actually added to conversation
-        $lastMessage = $this->conversation->messages()->latest()->first();
-        expect($lastMessage->content)->toBe('You are helpful')
-            ->and($lastMessage->role->value)->toBe('system');
-    });
-
-    it('adds assistant message and returns prism format', function () {
-        $prismMessage = $this->conversation->addAssistantMessageToPrism('I can help with that');
-
-        expect($prismMessage)->toBeInstanceOf(AssistantMessage::class)
-            ->and($prismMessage->content)->toBe('I can help with that');
-
-        // Verify message was actually added to conversation
-        $lastMessage = $this->conversation->messages()->latest()->first();
-        expect($lastMessage->content)->toBe('I can help with that')
-            ->and($lastMessage->role->value)->toBe('assistant');
-    });
-
-    it('passes metadata to message creation helpers', function () {
-        $metadata = ['model' => 'gpt-4', 'tokens' => 100];
+        expect($builder)->toBeInstanceOf(\ElliottLawson\ConversePrism\Support\PrismRequestBuilder::class);
         
-        $this->conversation->addUserMessageToPrism('Test message', $metadata);
+        // Verify the builder has the expected configuration methods
+        expect(method_exists($builder, 'using'))->toBeTrue();
+        expect(method_exists($builder, 'withMaxTokens'))->toBeTrue();
+        expect(method_exists($builder, 'usingTemperature'))->toBeTrue();
+        expect(method_exists($builder, 'execute'))->toBeTrue();
+    });
+
+    it('passes metadata when using fluent interface', function () {
+        $metadata = ['source' => 'fluent-test'];
+        
+        $this->conversation->withUserMessage('Test message', $metadata);
 
         $lastMessage = $this->conversation->messages()->latest()->first();
         expect($lastMessage->metadata)->toMatchArray($metadata);
     });
 
-    it('throws exception when calling helper methods on message model', function () {
+    it('throws exception when calling fluent methods on message model', function () {
         $this->conversation->addUserMessage('Test');
         $message = Message::latest()->first();
 
-        expect(fn () => $message->addUserMessageToPrism('test'))
-            ->toThrow(BadMethodCallException::class, 'addUserMessageToPrism can only be called on Conversation model');
+        expect(fn () => $message->withUserMessage('test'))
+            ->toThrow(BadMethodCallException::class, 'withUserMessage can only be called on Conversation model');
 
-        expect(fn () => $message->addSystemMessageToPrism('test'))
-            ->toThrow(BadMethodCallException::class, 'addSystemMessageToPrism can only be called on Conversation model');
+        expect(fn () => $message->withSystemMessage('test'))
+            ->toThrow(BadMethodCallException::class, 'withSystemMessage can only be called on Conversation model');
 
-        expect(fn () => $message->addAssistantMessageToPrism('test'))
-            ->toThrow(BadMethodCallException::class, 'addAssistantMessageToPrism can only be called on Conversation model');
+        expect(fn () => $message->withAssistantMessage('test'))
+            ->toThrow(BadMethodCallException::class, 'withAssistantMessage can only be called on Conversation model');
+
+        expect(fn () => $message->sendToPrism())
+            ->toThrow(BadMethodCallException::class, 'sendToPrism can only be called on Conversation model');
     });
 });
