@@ -144,7 +144,26 @@ trait InteractsWithPrism
             throw new \BadMethodCallException('toPrismText can only be called on Conversation model');
         }
 
-        return Prism::text()->withMessages($this->toPrismMessages());
+        $prismMessages = $this->toPrismMessages();
+
+        // Separate system messages from other messages
+        $systemMessages = array_filter($prismMessages, fn ($message) => $message instanceof \Prism\Prism\ValueObjects\Messages\SystemMessage);
+        $otherMessages = array_filter($prismMessages, fn ($message) => ! ($message instanceof \Prism\Prism\ValueObjects\Messages\SystemMessage));
+
+        $prismRequest = Prism::text();
+
+        // Add system messages as a single system prompt if present
+        if (! empty($systemMessages)) {
+            $systemPrompt = implode("\n\n", array_map(fn ($message) => $message->content, $systemMessages));
+            $prismRequest = $prismRequest->withSystemPrompt($systemPrompt);
+        }
+
+        // Add other messages
+        if (! empty($otherMessages)) {
+            $prismRequest = $prismRequest->withMessages(array_values($otherMessages));
+        }
+
+        return $prismRequest;
     }
 
     /**
@@ -157,7 +176,26 @@ trait InteractsWithPrism
             throw new \BadMethodCallException('toPrismStructured can only be called on Conversation model');
         }
 
-        return Prism::structured()->withMessages($this->toPrismMessages());
+        $prismMessages = $this->toPrismMessages();
+
+        // Separate system messages from other messages
+        $systemMessages = array_filter($prismMessages, fn ($message) => $message instanceof \Prism\Prism\ValueObjects\Messages\SystemMessage);
+        $otherMessages = array_filter($prismMessages, fn ($message) => ! ($message instanceof \Prism\Prism\ValueObjects\Messages\SystemMessage));
+
+        $prismRequest = Prism::structured();
+
+        // Add system messages as a single system prompt if present
+        if (! empty($systemMessages)) {
+            $systemPrompt = implode("\n\n", array_map(fn ($message) => $message->content, $systemMessages));
+            $prismRequest = $prismRequest->withSystemPrompt($systemPrompt);
+        }
+
+        // Add other messages
+        if (! empty($otherMessages)) {
+            $prismRequest = $prismRequest->withMessages(array_values($otherMessages));
+        }
+
+        return $prismRequest;
     }
 
     /**

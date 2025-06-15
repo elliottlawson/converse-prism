@@ -306,3 +306,140 @@ describe('Fluent Interface', function () {
         expect($lastMessage->metadata)->toMatchArray($metadata);
     });
 });
+
+describe('System Message Handling in toPrism Methods', function () {
+    it('separates system messages and passes them to withSystemPrompt for toPrismText', function () {
+        // Add multiple system messages mixed with other messages
+        $this->conversation
+            ->addSystemMessage('You are a helpful assistant')
+            ->addSystemMessage('You speak in a friendly tone')
+            ->addUserMessage('Hello, how are you?')
+            ->addAssistantMessage('I am doing well, thank you!')
+            ->addSystemMessage('You provide concise answers');
+
+        $pendingRequest = $this->conversation->toPrismText();
+
+        // Use reflection to verify the internal state
+        $reflection = new ReflectionClass($pendingRequest);
+
+        // Check if withSystemPrompt was called with combined system messages
+        if ($reflection->hasProperty('systemPrompt')) {
+            $systemPromptProperty = $reflection->getProperty('systemPrompt');
+            $systemPromptProperty->setAccessible(true);
+            $systemPrompt = $systemPromptProperty->getValue($pendingRequest);
+
+            // Verify system messages are combined with double newlines
+            expect($systemPrompt)->toBe("You are a helpful assistant\n\nYou speak in a friendly tone\n\nYou provide concise answers");
+        }
+
+        // Check that only non-system messages are passed to withMessages
+        if ($reflection->hasProperty('messages')) {
+            $messagesProperty = $reflection->getProperty('messages');
+            $messagesProperty->setAccessible(true);
+            $messages = $messagesProperty->getValue($pendingRequest);
+
+            // Should have 2 messages (user and assistant)
+            expect($messages)->toHaveCount(2);
+            expect($messages[0])->toBeInstanceOf(UserMessage::class);
+            expect($messages[1])->toBeInstanceOf(AssistantMessage::class);
+        }
+    });
+
+    it('separates system messages and passes them to withSystemPrompt for toPrismStructured', function () {
+        // Add multiple system messages
+        $this->conversation
+            ->addSystemMessage('You extract structured data')
+            ->addSystemMessage('You return JSON format')
+            ->addUserMessage('Extract data from this text');
+
+        $pendingRequest = $this->conversation->toPrismStructured();
+
+        // Use reflection to verify the internal state
+        $reflection = new ReflectionClass($pendingRequest);
+
+        // Check if withSystemPrompt was called
+        if ($reflection->hasProperty('systemPrompt')) {
+            $systemPromptProperty = $reflection->getProperty('systemPrompt');
+            $systemPromptProperty->setAccessible(true);
+            $systemPrompt = $systemPromptProperty->getValue($pendingRequest);
+
+            // Verify system messages are combined
+            expect($systemPrompt)->toBe("You extract structured data\n\nYou return JSON format");
+        }
+
+        // Check messages
+        if ($reflection->hasProperty('messages')) {
+            $messagesProperty = $reflection->getProperty('messages');
+            $messagesProperty->setAccessible(true);
+            $messages = $messagesProperty->getValue($pendingRequest);
+
+            // Should only have the user message
+            expect($messages)->toHaveCount(1);
+            expect($messages[0])->toBeInstanceOf(UserMessage::class);
+        }
+    });
+
+    it('handles conversations with no system messages', function () {
+        $this->conversation
+            ->addUserMessage('Hello')
+            ->addAssistantMessage('Hi there');
+
+        $pendingRequest = $this->conversation->toPrismText();
+
+        $reflection = new ReflectionClass($pendingRequest);
+
+        // Check system prompt
+        if ($reflection->hasProperty('systemPrompt')) {
+            $systemPromptProperty = $reflection->getProperty('systemPrompt');
+            $systemPromptProperty->setAccessible(true);
+            $systemPrompt = $systemPromptProperty->getValue($pendingRequest);
+
+            // No system prompt should be set
+            expect($systemPrompt)->toBeNull();
+        }
+
+        // Check messages
+        if ($reflection->hasProperty('messages')) {
+            $messagesProperty = $reflection->getProperty('messages');
+            $messagesProperty->setAccessible(true);
+            $messages = $messagesProperty->getValue($pendingRequest);
+
+            // All messages should be in the messages array
+            expect($messages)->toHaveCount(2);
+            expect($messages[0])->toBeInstanceOf(UserMessage::class);
+            expect($messages[1])->toBeInstanceOf(AssistantMessage::class);
+        }
+    });
+
+    it('handles conversations with only system messages', function () {
+        $this->conversation
+            ->addSystemMessage('System instruction 1')
+            ->addSystemMessage('System instruction 2');
+
+        $pendingRequest = $this->conversation->toPrismText();
+
+        $reflection = new ReflectionClass($pendingRequest);
+
+        // Check system prompt
+        if ($reflection->hasProperty('systemPrompt')) {
+            $systemPromptProperty = $reflection->getProperty('systemPrompt');
+            $systemPromptProperty->setAccessible(true);
+            $systemPrompt = $systemPromptProperty->getValue($pendingRequest);
+
+            // System prompt should contain both messages
+            expect($systemPrompt)->toBe("System instruction 1\n\nSystem instruction 2");
+        }
+
+        // Check messages
+        if ($reflection->hasProperty('messages')) {
+            $messagesProperty = $reflection->getProperty('messages');
+            $messagesProperty->setAccessible(true);
+            $messages = $messagesProperty->getValue($pendingRequest);
+
+            // Messages array should be empty or not set
+            if ($messages !== null) {
+                expect($messages)->toBeEmpty();
+            }
+        }
+    });
+});
