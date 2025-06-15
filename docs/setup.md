@@ -44,62 +44,20 @@ GROQ_API_KEY=your-groq-api-key
 
 You only need to add API keys for the providers you plan to use.
 
-## Verify Your Setup
+## Publishing Configuration (Optional)
 
-To verify everything is working, try creating your first conversation:
+If you want to customize the default settings, you can publish the configuration files:
 
-```php
-use Prism\Enums\Provider;
-
-// Get the authenticated user
-$user = auth()->user();
-
-// Start a new conversation
-$conversation = $user->startConversation(['title' => 'Test Conversation']);
-
-// Add a message and get AI response
-$response = $conversation
-    ->addUserMessage('Hello! Can you confirm you\'re working?')
-    ->toPrismText()
-    ->using(Provider::OpenAI, 'gpt-4')
-    ->withMaxTokens(50)
-    ->asText();
-
-// Store the response
-$conversation->addPrismResponse($response->text);
-
-echo $response->text; // Should see a greeting from the AI
-```
-
-## Troubleshooting
-
-### API Key Issues
-
-Verify your environment variables are set correctly:
+### Prism Configuration
 
 ```bash
-php artisan tinker
->>> env('OPENAI_API_KEY')
+php artisan vendor:publish --tag=prism-config
 ```
 
-### Class Not Found
-
-If you get class not found errors after updating your User model:
+### Converse Configuration
 
 ```bash
-composer dump-autoload
-```
-
-### Provider Errors
-
-Ensure you're using a valid provider and model combination:
-
-```php
-// Valid combinations
-->using(Provider::OpenAI, 'gpt-4')
-->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
-->using(Provider::Google, 'gemini-2.0-flash-exp')
-->using(Provider::Groq, 'llama-3.3-70b-versatile')
+php artisan vendor:publish --tag=converse-config
 ```
 
 ## Next Steps

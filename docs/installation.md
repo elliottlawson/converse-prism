@@ -17,9 +17,7 @@ Install Converse Prism via Composer:
 composer require elliottlawson/converse-prism
 ```
 
-This will automatically install all required dependencies, including:
-- [Converse](https://github.com/elliottlawson/converse) for conversation management
-- [Prism PHP](https://github.com/echolabsdev/prism) for AI provider integration
+This will automatically install [Converse](https://github.com/elliottlawson/converse) for conversation management.
 
 ## Database Migrations
 
@@ -32,22 +30,6 @@ php artisan migrate
 This creates two tables:
 - `conversations` - Stores conversation metadata
 - `messages` - Stores individual messages
-
-## Publishing Configuration (Optional)
-
-If you want to customize the default settings, you can publish the configuration files:
-
-### Prism Configuration
-
-```bash
-php artisan vendor:publish --tag=prism-config
-```
-
-### Converse Configuration
-
-```bash
-php artisan vendor:publish --tag=converse-config
-```
 
 ## Next Steps
 
