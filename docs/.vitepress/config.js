@@ -1,17 +1,22 @@
-export default {
+import { defineConfig } from 'vitepress'
+
+export default defineConfig({
   title: 'Converse Prism',
-  description: 'Seamless integration between Converse and Prism PHP for AI conversations',
+  description: 'Seamless Prism PHP integration for Laravel Converse',
   base: '/',
   
   head: [
     ['link', { rel: 'icon', href: '/favicon.ico' }],
     ['meta', { name: 'theme-color', content: '#3eaf7c' }],
+    ['link', { rel: 'stylesheet', href: '/custom.css' }]
   ],
   
   themeConfig: {
+    logo: '/logo.svg',
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Documentation', link: '/setup' },
+      { text: 'Guide', link: '/installation' },
+      { text: 'API', link: '/api/' },
       { text: 'GitHub', link: 'https://github.com/elliottlawson/converse-prism' }
     ],
     
@@ -19,7 +24,6 @@ export default {
       {
         text: 'Getting Started',
         items: [
-          { text: 'Overview', link: '/' },
           { text: 'Installation', link: '/installation' },
           { text: 'Setup', link: '/setup' },
           { text: 'Migration from Converse', link: '/migration' }
@@ -34,10 +38,19 @@ export default {
         ]
       },
       {
-        text: 'Reference',
+        text: 'API Reference',
         items: [
-          { text: 'API Reference', link: '/api-reference' },
-          { text: 'Examples', link: '/examples' }
+          { text: 'Overview', link: '/api/' },
+          { text: 'Conversations', link: '/api/conversations' },
+          { text: 'Messages', link: '/api/messages' },
+          { text: 'PrismStream', link: '/api/prism-stream' },
+          { text: 'Metadata', link: '/api/metadata' }
+        ]
+      },
+      {
+        text: 'Examples',
+        items: [
+          { text: 'Code Examples', link: '/examples' }
         ]
       }
     ],
@@ -55,4 +68,4 @@ export default {
       provider: 'local'
     }
   }
-} 
+}) 
