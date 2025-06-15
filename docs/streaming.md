@@ -164,17 +164,27 @@ $message = $stream->complete($response);
 broadcast(new MessageCompleted($conversation, $message))->toOthers();
 ```
 
-### Frontend with Laravel Echo
+### Frontend with Laravel Echo React Hooks
 
-```javascript
-// Listen for chunks
-Echo.channel(`conversation.${conversationId}`)
-    .listen('MessageChunkReceived', (e) => {
-        appendToMessage(e.chunk);
-    })
-    .listen('MessageCompleted', (e) => {
-        onMessageComplete(e.message);
-    });
+```jsx
+import { useState } from 'react';
+import { useChannel } from '@mayank1513/laravel-echo-react';
+
+function StreamingMessage({ conversationId }) {
+    const [message, setMessage] = useState('');
+    
+    // Subscribe to the conversation channel
+    useChannel(`conversation.${conversationId}`)
+        .listen('MessageChunkReceived', (e) => {
+            setMessage(prev => prev + e.chunk);
+        })
+        .listen('MessageCompleted', (e) => {
+            // Handle completion
+            console.log('Message completed:', e.message);
+        });
+    
+    return <div>{message}</div>;
+}
 ```
 
 ## Streaming with Progress
@@ -239,7 +249,7 @@ public function streamWithFallback(Request $request, Conversation $conversation)
             ->using(Provider::OpenAI, 'gpt-4')
             ->asText();
             
-        $conversation->addPrismResponse($response->text);
+        $conversation->addPrismResponse($response);
         
         return response()->json([
             'message' => $conversation->lastMessage,
