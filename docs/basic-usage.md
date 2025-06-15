@@ -11,17 +11,16 @@ When you call `toPrismText()`, `toPrismStructured()`, or `toPrismEmbeddings()` o
 ```php
 // Get a conversation and add a message
 $conversation = $user->conversations()->find($id);
-$conversation->addUserMessage('Explain quantum computing');
 
-// Seamlessly convert to a Prism request with full history
 $response = $conversation
+    ->addUserMessage('Explain quantum computing')
     ->toPrismText()
     ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
     ->withMaxTokens(500)
     ->asText();
 
 // Store the response with metadata
-$conversation->addPrismResponse($response->text);
+$conversation->addPrismResponse($response);
 ```
 
 This eliminates the boilerplate of manually extracting and formatting messages for every API call.
@@ -44,7 +43,7 @@ $response = $conversation
     ->asText();
 
 // Store the response
-$conversation->addPrismResponse($response->text);
+$conversation->addPrismResponse($response);
 ```
 
 ### Using Different Providers
@@ -107,10 +106,10 @@ $response = $conversation
     ->asText();
 
 // Automatically extracts: model, tokens, finish_reason, etc.
-$conversation->addPrismResponse($response->text);
+$conversation->addPrismResponse($response);
 
 // With additional custom metadata
-$conversation->addPrismResponse($response->text, [
+$conversation->addPrismResponse($response, [
     'request_id' => Str::uuid(),
     'response_time' => $responseTime
 ]);
@@ -181,7 +180,7 @@ $response = $qa
     ->withMaxTokens(50)
     ->asText();
 
-$qa->addPrismResponse($response->text); // "The capital of France is Paris."
+$qa->addPrismResponse($response); // "The capital of France is Paris."
 ```
 
 ### Multi-turn Conversation
@@ -197,7 +196,7 @@ $response1 = $chat
     ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
     ->asText();
 
-$chat->addPrismResponse($response1->text);
+$chat->addPrismResponse($response1);
 
 // Second turn - the AI has context from the first turn
 $response2 = $chat
@@ -206,7 +205,7 @@ $response2 = $chat
     ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
     ->asText();
 
-$chat->addPrismResponse($response2->text);
+$chat->addPrismResponse($response2);
 ```
 
 ### Different Models for Different Tasks
@@ -222,7 +221,7 @@ $summary = $conversation
     ->withMaxTokens(150)
     ->asText();
 
-$conversation->addPrismResponse($summary->text);
+$conversation->addPrismResponse($summary);
 
 // Use a more capable model for complex analysis
 $analysis = $conversation
@@ -232,7 +231,7 @@ $analysis = $conversation
     ->withMaxTokens(1000)
     ->asText();
 
-$conversation->addPrismResponse($analysis->text);
+$conversation->addPrismResponse($analysis);
 ```
 
 ## Error Handling
@@ -247,7 +246,7 @@ try {
         ->using(Provider::OpenAI, 'gpt-4')
         ->asText();
         
-    $conversation->addPrismResponse($response->text);
+            $conversation->addPrismResponse($response);
     
 } catch (\Prism\Exceptions\PrismException $e) {
     // Handle Prism-specific errors
@@ -301,7 +300,7 @@ $conversation->addUserMessage('How do I create a migration?');
 
 ### 4. Store Metadata for Analytics
 ```php
-$conversation->addPrismResponse($response->text, [
+$conversation->addPrismResponse($response, [
     'request_duration' => $duration,
     'user_satisfied' => true,
     'category' => 'technical_support'
