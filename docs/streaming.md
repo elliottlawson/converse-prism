@@ -1,19 +1,10 @@
 # Streaming
 
-Real-time streaming responses provide a better user experience by showing AI responses as they're generated, rather than waiting for the complete response.
+Converse Prism provides elegant streaming support through the `PrismStream` class, which handles chunk collection, progress tracking, and database persistence.
 
-## Overview
+## Basic Usage
 
-Converse Prism provides elegant streaming support through the `PrismStream` class, which handles:
-- Automatic chunk collection
-- Progress tracking
-- Database persistence
-- Error handling
-- Metadata extraction
-
-## Basic Streaming
-
-### Simple Stream Example
+The `streamPrismResponse()` method creates a streaming-enabled message that collects chunks as they arrive:
 
 ```php
 use Prism\Enums\Provider;
@@ -38,16 +29,16 @@ $response = $conversation
 $message = $stream->complete($response);
 ```
 
-### Understanding the Flow
+## How It Works
 
 1. **Create a stream** - `streamPrismResponse()` creates a new message in "streaming" status
 2. **Process chunks** - The callback receives each text chunk as it arrives
 3. **Append chunks** - `append()` collects chunks and updates the message
 4. **Complete stream** - `complete()` finalizes the message and extracts metadata
 
-## Server-Sent Events (SSE)
+## Server-Sent Events Example
 
-The most common pattern for web applications is using Server-Sent Events:
+A common pattern for web applications:
 
 ```php
 namespace App\Http\Controllers;
@@ -77,7 +68,6 @@ class StreamController extends Controller
                             'message_id' => $stream->getMessage()->id
                         ]) . "\n\n";
                         
-                        // Flush output immediately
                         ob_flush();
                         flush();
                     });
@@ -107,237 +97,9 @@ class StreamController extends Controller
 }
 ```
 
-### Frontend JavaScript Example
-
-```javascript
-const eventSource = new EventSource(`/api/conversations/${conversationId}/stream`);
-const messageDiv = document.getElementById('ai-response');
-
-eventSource.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    
-    if (data.chunk) {
-        // Append chunk to display
-        messageDiv.textContent += data.chunk;
-    } else if (data.done) {
-        // Stream completed
-        eventSource.close();
-        console.log('Complete message:', data.message);
-    } else if (data.error) {
-        // Handle error
-        eventSource.close();
-        console.error('Stream error:', data.message);
-    }
-};
-```
-
-## Broadcasting with Laravel Echo
-
-For real-time updates across multiple clients:
-
-```php
-use App\Events\MessageChunkReceived;
-use App\Events\MessageCompleted;
-
-$stream = $conversation->streamPrismResponse([
-    'channel' => "conversation.{$conversation->id}"
-]);
-
-$response = $conversation
-    ->addUserMessage($request->input('message'))
-    ->toPrismText()
-    ->using(Provider::OpenAI, 'gpt-4')
-    ->stream(function ($chunk) use ($stream, $conversation) {
-        $stream->append($chunk);
-        
-        // Broadcast to all listening clients
-        broadcast(new MessageChunkReceived(
-            $conversation,
-            $stream->getMessage(),
-            $chunk
-        ))->toOthers();
-    });
-
-$message = $stream->complete($response);
-
-// Broadcast completion
-broadcast(new MessageCompleted($conversation, $message))->toOthers();
-```
-
-### Frontend with Laravel Echo React Hooks
-
-```jsx
-import { useState } from 'react';
-import { useEcho } from '@laravel/echo-react';
-
-function StreamingMessage({ conversationId }) {
-    const [message, setMessage] = useState('');
-    
-    // Subscribe to the conversation channel
-    useEcho(`conversation.${conversationId}`, 'MessageChunkReceived', (e) => {
-        setMessage(prev => prev + e.chunk);
-    });
-    
-    useEcho(`conversation.${conversationId}`, 'MessageCompleted', (e) => {
-        // Handle completion
-        console.log('Message completed:', e.message);
-    });
-    
-    return <div>{message}</div>;
-}
-```
-
-## Streaming with Progress
-
-Track streaming progress and display to users:
-
-```php
-$totalChunks = 0;
-$startTime = microtime(true);
-
-$stream = $conversation->streamPrismResponse();
-
-$response = $conversation
-    ->toPrismText()
-    ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
-    ->stream(function ($chunk) use ($stream, &$totalChunks, $startTime) {
-        $stream->append($chunk);
-        $totalChunks++;
-        
-        // Calculate metrics
-        $elapsed = microtime(true) - $startTime;
-        $charsPerSecond = strlen($stream->getMessage()->content) / $elapsed;
-        
-        // Send progress update
-        echo "data: " . json_encode([
-            'chunk' => $chunk,
-            'progress' => [
-                'chunks' => $totalChunks,
-                'characters' => strlen($stream->getMessage()->content),
-                'elapsed' => round($elapsed, 2),
-                'speed' => round($charsPerSecond)
-            ]
-        ]) . "\n\n";
-        
-        ob_flush();
-        flush();
-    });
-```
-
-## Advanced Streaming Patterns
-
-### Streaming with Fallback
-
-Handle streaming failures gracefully:
-
-```php
-public function streamWithFallback(Request $request, Conversation $conversation)
-{
-    try {
-        // Try streaming first
-        return $this->streamResponse($request, $conversation);
-    } catch (\Exception $e) {
-        // Fallback to non-streaming
-        Log::warning('Streaming failed, using fallback', [
-            'error' => $e->getMessage(),
-            'conversation_id' => $conversation->id
-        ]);
-        
-        $response = $conversation
-            ->addUserMessage($request->input('message'))
-            ->toPrismText()
-            ->using(Provider::OpenAI, 'gpt-4')
-            ->asText();
-            
-        $conversation->addPrismResponse($response);
-        
-        return response()->json([
-            'message' => $conversation->lastMessage,
-            'streamed' => false
-        ]);
-    }
-}
-```
-
-### Chunked Processing
-
-Process chunks before sending them:
-
-```php
-$buffer = '';
-$sentences = [];
-
-$stream = $conversation->streamPrismResponse();
-
-$response = $conversation
-    ->toPrismText()
-    ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
-    ->stream(function ($chunk) use ($stream, &$buffer, &$sentences) {
-        $stream->append($chunk);
-        $buffer .= $chunk;
-        
-        // Process complete sentences
-        while (preg_match('/^(.*?[.!?])\s*/s', $buffer, $matches)) {
-            $sentence = $matches[1];
-            $buffer = substr($buffer, strlen($matches[0]));
-            $sentences[] = $sentence;
-            
-            // Send complete sentence
-            echo "data: " . json_encode([
-                'sentence' => $sentence,
-                'sentence_count' => count($sentences)
-            ]) . "\n\n";
-            
-            ob_flush();
-            flush();
-        }
-    });
-
-// Don't forget remaining buffer
-if ($buffer) {
-    echo "data: " . json_encode(['sentence' => $buffer]) . "\n\n";
-}
-```
-
-### Streaming with Rate Limiting
-
-Control the rate of updates sent to the client:
-
-```php
-$lastUpdate = 0;
-$updateInterval = 0.1; // Update every 100ms
-$buffer = '';
-
-$stream = $conversation->streamPrismResponse();
-
-$response = $conversation
-    ->toPrismText()
-    ->using(Provider::OpenAI, 'gpt-4')
-    ->stream(function ($chunk) use ($stream, &$lastUpdate, &$buffer, $updateInterval) {
-        $stream->append($chunk);
-        $buffer .= $chunk;
-        
-        $now = microtime(true);
-        if ($now - $lastUpdate >= $updateInterval) {
-            // Send buffered content
-            echo "data: " . json_encode(['chunk' => $buffer]) . "\n\n";
-            ob_flush();
-            flush();
-            
-            $buffer = '';
-            $lastUpdate = $now;
-        }
-    });
-
-// Send any remaining buffer
-if ($buffer) {
-    echo "data: " . json_encode(['chunk' => $buffer]) . "\n\n";
-}
-```
-
 ## Error Handling
 
-### Stream Failure Handling
+The `PrismStream` class provides a `fail()` method for error handling:
 
 ```php
 $stream = $conversation->streamPrismResponse();
@@ -353,44 +115,16 @@ try {
         
     $message = $stream->complete($response);
     
-} catch (\Prism\Exceptions\PrismException $e) {
-    // API-specific error
+} catch (\Exception $e) {
+    // Mark the stream as failed with optional metadata
     $stream->fail($e->getMessage(), [
         'error_type' => 'api_error',
-        'provider' => 'anthropic',
         'status_code' => $e->getCode()
-    ]);
-    
-} catch (\Exception $e) {
-    // General error
-    $stream->fail($e->getMessage(), [
-        'error_type' => 'general_error'
     ]);
 }
 ```
 
-### Timeout Handling
-
-```php
-$timeout = 30; // 30 seconds
-$startTime = time();
-
-$stream = $conversation->streamPrismResponse();
-
-$response = $conversation
-    ->toPrismText()
-    ->using(Provider::OpenAI, 'gpt-4')
-    ->stream(function ($chunk) use ($stream, $timeout, $startTime) {
-        if (time() - $startTime > $timeout) {
-            throw new \Exception('Stream timeout exceeded');
-        }
-        
-        $stream->append($chunk);
-        // Process chunk...
-    });
-```
-
-## Metadata and Analytics
+## Metadata Tracking
 
 The streaming system automatically tracks useful metadata:
 
@@ -407,9 +141,7 @@ echo $metadata['model'];              // Model used
 echo $metadata['finish_reason'];      // Why streaming stopped
 ```
 
-### Custom Stream Metadata
-
-Add your own metadata during streaming:
+You can also add custom metadata when creating the stream:
 
 ```php
 $stream = $conversation->streamPrismResponse([
@@ -417,53 +149,6 @@ $stream = $conversation->streamPrismResponse([
     'ip_address' => request()->ip(),
     'session_id' => session()->getId()
 ]);
-
-// The metadata is stored with the message
-```
-
-## Best Practices
-
-### 1. Always Use Try-Catch
-```php
-try {
-    // Streaming code
-} catch (\Exception $e) {
-    $stream->fail($e->getMessage());
-    // Handle error appropriately
-}
-```
-
-### 2. Flush Output Immediately
-```php
-echo "data: " . json_encode(['chunk' => $chunk]) . "\n\n";
-ob_flush();
-flush();
-```
-
-### 3. Set Appropriate Headers
-```php
-return response()->stream(function () {
-    // ...
-}, 200, [
-    'Content-Type' => 'text/event-stream',
-    'Cache-Control' => 'no-cache',
-    'X-Accel-Buffering' => 'no', // Important for Nginx
-]);
-```
-
-### 4. Handle Connection Drops
-```php
-// Check if client is still connected
-if (connection_aborted()) {
-    $stream->fail('Client disconnected');
-    return;
-}
-```
-
-### 5. Test Streaming Locally
-Some local development servers buffer output. Test with:
-```bash
-php artisan serve --host=0.0.0.0
 ```
 
 ## Next Steps
