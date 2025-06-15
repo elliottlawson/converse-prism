@@ -4,107 +4,29 @@ This guide covers the core features of Converse Prism and common usage patterns.
 
 ## The Magic: Automatic Message Passing
 
-The most powerful feature of Converse Prism is **automatic message passing**. When you call `toPrismText()`, `toPrismStructured()`, or `toPrismEmbeddings()`, the package automatically:
+Converse Prism seamlessly bridges Laravel Converse with Prism PHP. It allows you to not only store and retrieve conversation history but also fluently pass that history into a Prism request chain.
 
-1. Retrieves all messages from the conversation
-2. Converts them to Prism's message format
-3. Passes them to the Prism request
-4. Returns a configured request ready for additional options
+When you call `toPrismText()`, `toPrismStructured()`, or `toPrismEmbeddings()` on a conversation, the entire message history is automatically converted to Prism's format and injected into your request:
 
 ```php
-// What you write:
-$request = $conversation->toPrismText();
+// Get a conversation and add a message
+$conversation = $user->conversations()->find($id);
+$conversation->addUserMessage('Explain quantum computing');
 
-// What happens behind the scenes:
-$messages = $conversation->toPrismMessages(); // Convert to Prism format
-$request = Prism::text()->withMessages($messages); // Pass to Prism
+// Seamlessly convert to a Prism request with full history
+$response = $conversation
+    ->toPrismText()
+    ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
+    ->withMaxTokens(500)
+    ->asText();
+
+// Store the response with metadata
+$conversation->addPrismResponse($response->text);
 ```
 
 This eliminates the boilerplate of manually extracting and formatting messages for every API call.
 
-## Starting Conversations
-
-### Creating a New Conversation
-
-```php
-use Prism\Enums\Provider;
-
-$user = auth()->user();
-
-// Simple conversation
-$conversation = $user->startConversation();
-
-// With metadata
-$conversation = $user->startConversation([
-    'title' => 'Product Support Chat',
-    'metadata' => [
-        'source' => 'web',
-        'category' => 'support',
-        'user_timezone' => 'America/New_York'
-    ]
-]);
-```
-
-### Continuing Existing Conversations
-
-```php
-// Find by ID
-$conversation = $user->conversations()->find($conversationId);
-
-// Find by title
-$conversation = $user->conversations()
-    ->where('title', 'Product Support Chat')
-    ->first();
-
-// Get the most recent conversation
-$conversation = $user->conversations()->latest()->first();
-```
-
-## Adding Messages
-
-### Message Types
-
-Converse Prism supports all standard message roles:
-
-```php
-// System message - Sets the AI's behavior
-$conversation->addSystemMessage('You are a helpful customer support agent');
-
-// User message - What the user says
-$conversation->addUserMessage('I need help with my order');
-
-// Assistant message - The AI's response (usually added automatically)
-$conversation->addAssistantMessage('I\'d be happy to help with your order');
-
-// Tool call message - When the AI wants to use a tool
-$conversation->addToolCallMessage('[{"name": "get_order", "arguments": {"id": "123"}}]');
-
-// Tool result message - The result of a tool call
-$conversation->addToolResultMessage('{"status": "shipped", "tracking": "ABC123"}');
-```
-
-### Chaining Messages
-
-All message methods return the conversation instance for chaining:
-
-```php
-$conversation = $user->startConversation()
-    ->addSystemMessage('You are a Python expert')
-    ->addUserMessage('How do I read a CSV file?')
-    ->addUserMessage('Using pandas specifically');
-```
-
-### Messages with Metadata
-
-Add custom metadata to any message:
-
-```php
-$conversation->addUserMessage('What is the weather?', [
-    'ip_address' => request()->ip(),
-    'user_agent' => request()->userAgent(),
-    'timestamp' => now()->toIso8601String()
-]);
-```
+> For core Converse usage (starting conversations, adding messages, etc.), see the [Converse documentation](https://github.com/elliottlawson/converse).
 
 ## Making AI Requests
 
