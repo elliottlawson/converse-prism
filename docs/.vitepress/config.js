@@ -6,13 +6,10 @@ export default defineConfig({
   base: '/',
   
   head: [
-    ['link', { rel: 'icon', href: '/favicon.ico' }],
-    ['meta', { name: 'theme-color', content: '#3eaf7c' }],
-    ['link', { rel: 'stylesheet', href: '/custom.css' }]
+    ['meta', { name: 'theme-color', content: '#3eaf7c' }]
   ],
   
   themeConfig: {
-    logo: '/logo.svg',
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/installation' },
