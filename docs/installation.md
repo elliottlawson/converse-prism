@@ -33,4 +33,4 @@ This creates two tables:
 
 ## Next Steps
 
-Once installed, proceed to [Setup](setup.md) to configure your User model and API keys. 
+Once installed, proceed to [Setup](setup.md) to configure your User model. 

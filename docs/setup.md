@@ -1,6 +1,6 @@
 # Setup
 
-After installation, you need to configure your User model and set up your AI provider API keys.
+After installation, you need to configure your User model.
 
 ## Configure Your User Model
 
@@ -23,26 +23,6 @@ class User extends Authenticatable
 ```
 
 That's it! Your User model is now ready to manage AI conversations.
-
-## Configure AI Provider API Keys
-
-Add your AI provider API keys to your `.env` file:
-
-```bash
-# OpenAI
-OPENAI_API_KEY=your-openai-api-key
-
-# Anthropic
-ANTHROPIC_API_KEY=your-anthropic-api-key
-
-# Google
-GEMINI_API_KEY=your-gemini-api-key
-
-# Groq (optional)
-GROQ_API_KEY=your-groq-api-key
-```
-
-You only need to add API keys for the providers you plan to use.
 
 ## Publishing Configuration (Optional)
 
