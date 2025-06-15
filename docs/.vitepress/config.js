@@ -10,11 +10,10 @@ export default defineConfig({
   ],
   
   themeConfig: {
+    logo: '/converse-icon.png',
     nav: [
-      { text: 'Home', link: '/' },
       { text: 'Guide', link: '/installation' },
-      { text: 'API', link: '/api/' },
-      { text: 'GitHub', link: 'https://github.com/elliottlawson/converse-prism' }
+      { text: 'API', link: '/api/' }
     ],
     
     sidebar: [

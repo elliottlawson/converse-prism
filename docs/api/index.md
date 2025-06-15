@@ -31,7 +31,7 @@ Automatic metadata extraction and structure for AI responses.
 
 ## Inherited Functionality
 
-All standard Laravel Converse methods remain available. See the [Converse documentation](https://converse-php.netlify.app/api) for the complete API reference of the base package.
+All standard Laravel Converse methods remain available. See the [Converse documentation](https://converse-php.netlify.app/api/conversations.html) for the complete API reference of the base package.
 
 ## Version Compatibility
 

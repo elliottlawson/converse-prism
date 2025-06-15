@@ -21,6 +21,7 @@ Thumbs.db
 node_modules/
 docs/.vitepress/dist/
 docs/.vitepress/cache/
+docs/public/
 package-lock.json
 yarn.lock
 
