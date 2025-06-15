@@ -1,16 +1,94 @@
-# Converse Prism
+<p align="center">
+  <img src="converse-icon.png" alt="Converse Prism Logo" width="120">
+</p>
 
-[![Tests](https://github.com/elliottlawson/converse-prism/workflows/Tests/badge.svg)](https://github.com/elliottlawson/converse-prism/actions)
-[![Latest Stable Version](https://poser.pugx.org/elliottlawson/converse-prism/v)](https://packagist.org/packages/elliottlawson/converse-prism)
-[![Total Downloads](https://poser.pugx.org/elliottlawson/converse-prism/downloads)](https://packagist.org/packages/elliottlawson/converse-prism)
-[![License](https://poser.pugx.org/elliottlawson/converse-prism/license)](https://packagist.org/packages/elliottlawson/converse-prism)
+<br>
 
-Converse Prism seamlessly connects [Converse](https://github.com/elliottlawson/converse) conversations with [Prism PHP](https://github.com/echolabsdev/prism) AI providers. Write `$conversation->toPrismText()` and your entire conversation history flows to any AI provider—no manual message formatting required.
+<p align="center">
+  <a href="https://github.com/elliottlawson/converse-prism/actions"><img src="https://github.com/elliottlawson/converse-prism/workflows/Tests/badge.svg" alt="Tests"></a>
+  <a href="https://packagist.org/packages/elliottlawson/converse-prism"><img src="https://poser.pugx.org/elliottlawson/converse-prism/v" alt="Latest Stable Version"></a>
+  <a href="https://packagist.org/packages/elliottlawson/converse-prism"><img src="https://poser.pugx.org/elliottlawson/converse-prism/downloads" alt="Total Downloads"></a>
+  <a href="https://packagist.org/packages/elliottlawson/converse-prism"><img src="https://poser.pugx.org/elliottlawson/converse-prism/license" alt="License"></a>
+</p>
+
+<br>
+
+# Converse Prism - Seamless AI Integration for Laravel Converse
+
+**Managing conversation context is hard. Managing AI provider APIs is harder. Doing both is a nightmare.**
+
+Converse Prism bridges [Laravel Converse](https://github.com/elliottlawson/converse) with [Prism PHP](https://github.com/echolabsdev/prism) to make AI conversations effortless. Write `$conversation->toPrismText()` and your entire conversation history flows to any AI provider—OpenAI, Anthropic, Google, or beyond. No manual message formatting. No provider lock-in. Just conversations that work.
+
+## 📚 Documentation
+
+**[View the full documentation](https://converse-prism.netlify.app)** - Comprehensive guides, API reference, and examples.
+
+## The Magic
+
+Without Converse Prism, you're juggling two complex systems:
+
+```php
+// Extract messages from Converse 😓
+$messages = [];
+foreach ($conversation->messages as $message) {
+    $messages[] = [
+        'role' => $message->role,
+        'content' => $message->content
+    ];
+}
+
+// Manually configure Prism
+$prism = Prism::text()
+    ->using(Provider::OpenAI, 'gpt-4')
+    ->withMessages($messages)
+    ->withMaxTokens(500);
+
+// Make the call
+$response = $prism->generate();
+
+// Figure out metadata storage...
+$conversation->messages()->create([
+    'role' => 'assistant',
+    'content' => $response->text,
+    // What about tokens? Model info? 🤷
+]);
+```
+
+With Converse Prism, it's seamless:
+
+```php
+// Everything flows automatically ✨
+$response = $conversation
+    ->toPrismText()
+    ->using(Provider::OpenAI, 'gpt-4')
+    ->withMaxTokens(500)
+    ->asText();
+
+// Store response with all metadata
+$conversation->addPrismResponse($response->text);
+```
+
+That's it. **Your conversation history becomes your AI context. Automatically.**
+
+## Features
+
+- 🔄 **Automatic Message Passing** - Conversation history flows to AI providers without manual formatting
+- 🎯 **Direct Prism Integration** - First-class support for all Prism features and providers
+- 🌊 **Elegant Streaming** - Real-time responses with automatic chunk collection and storage
+- 🛠️ **Tool & Function Support** - Handle complex AI workflows with automatic message type management
+- 📊 **Complete Metadata** - Token counts, model info, and response metadata stored automatically
+- 🚀 **Drop-in Enhancement** - Works with all existing Converse code, just adds Prism superpowers
 
 ## Installation
 
 ```bash
 composer require elliottlawson/converse-prism
+```
+
+The Prism package will be installed automatically. Run the migrations:
+
+```bash
+php artisan migrate
 ```
 
 ## Quick Start
@@ -22,7 +100,7 @@ use ElliottLawson\ConversePrism\Concerns\HasAIConversations;
 
 class User extends Authenticatable
 {
-    use HasAIConversations;
+    use HasAIConversations; // Replaces the base Converse trait
 }
 ```
 
@@ -43,26 +121,16 @@ $response = $conversation
     ->withMaxTokens(500)
     ->asText();
 
-// Store the AI's response
+// Store the AI's response with metadata
 $conversation->addPrismResponse($response->text);
 ```
-
-## Features
-
-- **Automatic Message Passing** - Conversation history automatically flows to AI providers
-- **Direct AI Integration** - Works with OpenAI, Anthropic, Google, and any Prism-supported provider
-- **Elegant Streaming** - Real-time responses with automatic chunk collection
-- **Tool & Function Support** - Full support for AI tool calling
-- **Drop-in Enhancement** - All existing Converse code continues working
-
-## Documentation
-
-Full documentation is available at [https://github.com/elliottlawson/converse-prism/tree/main/docs](https://github.com/elliottlawson/converse-prism/tree/main/docs)
 
 ## Requirements
 
 - PHP 8.2+
-- Laravel 11.0+ or 12.0+
+- Laravel 11.0+
+- Converse ^1.0
+- Prism ^0.6
 
 ## License
 
