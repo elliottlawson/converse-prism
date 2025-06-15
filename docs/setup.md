@@ -28,7 +28,7 @@ That's it! Your User model is now ready to manage AI conversations.
 
 Add your AI provider API keys to your `.env` file:
 
-```env
+```bash
 # OpenAI
 OPENAI_API_KEY=your-openai-api-key
 
