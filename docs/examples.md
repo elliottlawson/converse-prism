@@ -493,6 +493,6 @@ class UsageTracker
 
 ## Next Steps
 
-- Explore the [API Reference](api-reference.md) for detailed method documentation
+- Explore the [API Reference](/api/) for detailed method documentation
 - Check out [Advanced Features](advanced-features.md) for more complex features
 - Review [Streaming](streaming.md) for real-time implementations 

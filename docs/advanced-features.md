@@ -177,5 +177,5 @@ This automatic handling ensures your conversation history accurately reflects al
 ## Next Steps
 
 - See [Examples](examples.md) for complete implementations
-- Review the [API Reference](api-reference.md) for all available methods
+- Review the [API Reference](/api/) for all available methods
 - Learn about [Streaming](streaming.md) for real-time responses 
