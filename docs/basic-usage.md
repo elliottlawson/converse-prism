@@ -31,7 +31,7 @@ This eliminates the boilerplate of manually extracting and formatting messages f
 
 ### Text Generation
 
-The most common use case - generating text responses:
+Generate text responses with conversation history automatically included:
 
 ```php
 $response = $conversation
@@ -42,62 +42,45 @@ $response = $conversation
     ->withTemperature(0.7)
     ->asText();
 
-// Store the response
 $conversation->addPrismResponse($response);
 ```
 
-### Using Different Providers
+### Structured Output
 
-Converse Prism works with any provider supported by Prism:
+Generate structured responses:
 
 ```php
-// OpenAI
 $response = $conversation
-    ->toPrismText()
+    ->addUserMessage('Extract the key points from our discussion')
+    ->toPrismStructured()
     ->using(Provider::OpenAI, 'gpt-4o')
-    ->asText();
+    ->withStructure(['key_points' => 'array'])
+    ->asStructured();
 
-// Anthropic
-$response = $conversation
-    ->toPrismText()
-    ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
-    ->asText();
-
-// Google
-$response = $conversation
-    ->toPrismText()
-    ->using(Provider::Google, 'gemini-2.0-flash-exp')
-    ->asText();
-
-// Groq
-$response = $conversation
-    ->toPrismText()
-    ->using(Provider::Groq, 'llama-3.3-70b-versatile')
-    ->asText();
+$conversation->addPrismResponse($response);
 ```
 
-### Configuring AI Parameters
+### Embeddings
 
-Use Prism's fluent API to configure your requests:
+Generate embeddings from the last user message:
 
 ```php
 $response = $conversation
-    ->toPrismText()
-    ->using(Provider::OpenAI, 'gpt-4')
-    ->withMaxTokens(1000)        // Maximum response length
-    ->withTemperature(0.8)       // Creativity (0-2)
-    ->withTopP(0.9)             // Nucleus sampling
-    ->withPresencePenalty(0.1)   // Discourage repetition
-    ->withFrequencyPenalty(0.1)  // Discourage common phrases
-    ->withUser('user-123')       // Track user for abuse monitoring
-    ->asText();
+    ->addUserMessage('Machine learning is transforming industries')
+    ->toPrismEmbeddings()
+    ->using(Provider::OpenAI, 'text-embedding-3-small')
+    ->asVector();
+
+// Store with custom metadata
+$conversation->addAssistantMessage('Embedding generated', [
+    'embedding' => $response->embedding,
+    'model' => 'text-embedding-3-small'
+]);
 ```
 
-## Handling Responses
+## Storing Responses
 
-### Storing AI Responses
-
-The `addPrismResponse()` method automatically extracts metadata:
+The `addPrismResponse()` method automatically extracts metadata from Prism responses:
 
 ```php
 $response = $conversation
@@ -132,24 +115,35 @@ echo $lastMessage->metadata['finish_reason'];        // Why generation stopped
 
 ## Message Format Conversion
 
-### Converting to Prism Messages
+### Converting Messages to Prism Format
 
-Get all conversation messages as Prism message objects:
+The `toPrismMessages()` method converts all conversation messages to Prism message objects:
 
 ```php
-// Get all messages
+// Get all messages as Prism objects
 $prismMessages = $conversation->toPrismMessages();
 // Returns: [SystemMessage, UserMessage, AssistantMessage, ...]
 
-// Convert a single message
+// Each message is properly formatted for Prism
+foreach ($prismMessages as $message) {
+    echo get_class($message); // Prism\Prism\Messages\UserMessage, etc.
+    echo $message->content;
+}
+```
+
+### Single Message Conversion
+
+Convert individual messages:
+
+```php
 $message = $conversation->messages()->first();
 $prismMessage = $message->toPrismMessage();
 // Returns: SystemMessage { content: "You are helpful" }
 ```
 
-### Manual Conversion
+### Manual Usage
 
-If you need more control, you can manually work with messages:
+If you need more control, you can use the converted messages directly with Prism:
 
 ```php
 use Prism\Prism;
@@ -162,28 +156,18 @@ $response = Prism::text()
     ->withMessages($messages)
     ->using(Provider::OpenAI, 'gpt-4')
     ->asText();
-```
 
-## Common Patterns
-
-### Question and Answer
-
-```php
-$qa = $user->startConversation(['title' => 'Q&A Session'])
-    ->addSystemMessage('Answer questions concisely and accurately');
-
-// Ask a question
-$response = $qa
-    ->addUserMessage('What is the capital of France?')
-    ->toPrismText()
-    ->using(Provider::OpenAI, 'gpt-4o-mini')
-    ->withMaxTokens(50)
+// Add custom messages before sending
+$messages[] = new \Prism\Prism\Messages\UserMessage('One more thing...');
+$response = Prism::text()
+    ->withMessages($messages)
+    ->using(Provider::OpenAI, 'gpt-4')
     ->asText();
-
-$qa->addPrismResponse($response); // "The capital of France is Paris."
 ```
 
-### Multi-turn Conversation
+## Multi-turn Conversations
+
+The real power comes from maintaining context across multiple turns:
 
 ```php
 $chat = $user->startConversation(['title' => 'Planning Assistant'])
@@ -198,7 +182,7 @@ $response1 = $chat
 
 $chat->addPrismResponse($response1);
 
-// Second turn - the AI has context from the first turn
+// Second turn - the AI has context from the entire conversation
 $response2 = $chat
     ->addUserMessage('The presentation is about our Q4 results')
     ->toPrismText()
@@ -206,105 +190,6 @@ $response2 = $chat
     ->asText();
 
 $chat->addPrismResponse($response2);
-```
-
-### Different Models for Different Tasks
-
-```php
-$conversation = $user->startConversation();
-
-// Use a fast model for simple tasks
-$summary = $conversation
-    ->addUserMessage('Summarize: ' . $longText)
-    ->toPrismText()
-    ->using(Provider::OpenAI, 'gpt-4o-mini')
-    ->withMaxTokens(150)
-    ->asText();
-
-$conversation->addPrismResponse($summary);
-
-// Use a more capable model for complex analysis
-$analysis = $conversation
-    ->addUserMessage('Now provide a detailed analysis of the key points')
-    ->toPrismText()
-    ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
-    ->withMaxTokens(1000)
-    ->asText();
-
-$conversation->addPrismResponse($analysis);
-```
-
-## Error Handling
-
-Always wrap AI calls in try-catch blocks:
-
-```php
-try {
-    $response = $conversation
-        ->addUserMessage($userInput)
-        ->toPrismText()
-        ->using(Provider::OpenAI, 'gpt-4')
-        ->asText();
-        
-            $conversation->addPrismResponse($response);
-    
-} catch (\Prism\Exceptions\PrismException $e) {
-    // Handle Prism-specific errors
-    Log::error('AI request failed', [
-        'error' => $e->getMessage(),
-        'conversation_id' => $conversation->id
-    ]);
-    
-    // Optionally add an error message to the conversation
-    $conversation->addAssistantMessage(
-        'I apologize, but I encountered an error. Please try again.',
-        ['error' => $e->getMessage()]
-    );
-} catch (\Exception $e) {
-    // Handle other errors
-    Log::error('Unexpected error', ['error' => $e->getMessage()]);
-}
-```
-
-## Best Practices
-
-### 1. Always Set a System Message
-```php
-// Good - Clear context for the AI
-$conversation->addSystemMessage('You are a helpful coding assistant specializing in Laravel');
-
-// Less optimal - No context
-$conversation->addUserMessage('How do I create a migration?');
-```
-
-### 2. Use Appropriate Models
-```php
-// Simple task = smaller, faster model
-->using(Provider::OpenAI, 'gpt-4o-mini')
-
-// Complex task = more capable model
-->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
-```
-
-### 3. Set Reasonable Token Limits
-```php
-// For concise responses
-->withMaxTokens(150)
-
-// For detailed explanations
-->withMaxTokens(1000)
-
-// For long-form content
-->withMaxTokens(4000)
-```
-
-### 4. Store Metadata for Analytics
-```php
-$conversation->addPrismResponse($response, [
-    'request_duration' => $duration,
-    'user_satisfied' => true,
-    'category' => 'technical_support'
-]);
 ```
 
 ## Next Steps
