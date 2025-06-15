@@ -11,7 +11,7 @@ export default {
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Documentation', link: '/installation' },
+      { text: 'Documentation', link: '/setup' },
       { text: 'GitHub', link: 'https://github.com/elliottlawson/converse-prism' }
     ],
     
