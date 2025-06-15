@@ -6,7 +6,7 @@ Extensions to the Conversation model for Prism PHP integration.
 
 ### `toPrismText()`
 
-Returns a `PendingTextRequest` with conversation messages pre-loaded.
+Returns a `PendingTextRequest` with conversation messages pre-loaded. System messages are automatically separated and passed to `withSystemPrompts()` while other messages are passed to `withMessages()`.
 
 ```php
 public function toPrismText(): \Prism\Prism\Text\PendingRequest
@@ -14,9 +14,19 @@ public function toPrismText(): \Prism\Prism\Text\PendingRequest
 
 **Returns:** `PendingTextRequest` - Ready for provider/model configuration
 
+**System Message Handling:**
+- System messages are automatically extracted from the conversation
+- Multiple system messages are preserved individually (not combined)
+- System messages are passed to Prism via `withSystemPrompts()`
+- Other messages (user, assistant, tool) are passed via `withMessages()`
+
 **Example:**
 ```php
-$request = $conversation->toPrismText()
+$request = $conversation
+    ->addSystemMessage('You are a helpful assistant')
+    ->addSystemMessage('Respond concisely')
+    ->addUserMessage('Hello!')
+    ->toPrismText()
     ->using(Provider::OpenAI, 'gpt-4')
     ->withMaxTokens(500)
     ->asText();
@@ -26,7 +36,7 @@ $request = $conversation->toPrismText()
 
 ### `toPrismStructured()`
 
-Returns a `PendingStructuredRequest` for schema-based responses.
+Returns a `PendingStructuredRequest` for schema-based responses. Like `toPrismText()`, system messages are automatically separated and handled appropriately.
 
 ```php
 public function toPrismStructured(): \Prism\Prism\Structured\PendingRequest
@@ -34,9 +44,16 @@ public function toPrismStructured(): \Prism\Prism\Structured\PendingRequest
 
 **Returns:** `PendingStructuredRequest` - Ready for schema configuration
 
+**System Message Handling:**
+- Same behavior as `toPrismText()` - system messages are extracted and passed via `withSystemPrompts()`
+- Ensures consistent message handling across all Prism request types
+
 **Example:**
 ```php
-$response = $conversation->toPrismStructured()
+$response = $conversation
+    ->addSystemMessage('Extract structured data from user input')
+    ->addUserMessage('John Doe, age 30, software engineer')
+    ->toPrismStructured()
     ->using(Provider::OpenAI, 'gpt-4o')
     ->withSchema($schema)
     ->asStructured();
