@@ -1,48 +1,48 @@
 # Converse Prism
-## AI Integration for Converse
+## Seamless Prism PHP Integration for Laravel Converse
 
-Converse Prism seamlessly connects [Converse](https://github.com/elliottlawson/converse) conversations with [Prism PHP](https://github.com/echolabsdev/prism) AI providers. Write `$conversation->toPrismText()` and your entire conversation history flows to any AI provider—no manual message formatting required.
+AI SDKs are great at sending messages, but terrible at having conversations. Converse Prism makes AI conversations flow as naturally as Eloquent makes database queries.
 
 <div class="actions">
-  <a href="/setup" class="button primary">Setup</a>
+  <a href="/installation" class="button primary">Installation</a>
   <a href="https://github.com/elliottlawson/converse-prism" class="button">View on GitHub</a>
 </div>
 
 <div class="features">
   <div class="feature">
-    <div class="feature-icon">🔄</div>
-    <h3>Automatic Message Passing</h3>
-    <p>Conversation history automatically flows to AI providers. No manual message extraction or formatting—just call toPrismText() and go.</p>
+    <div class="feature-icon">💾</div>
+    <h3>Database-Backed AI Conversations</h3>
+    <p>Conversations and AI responses are stored in your database, surviving page reloads and server restarts. Query your AI history with Eloquent.</p>
   </div>
 
   <div class="feature">
-    <div class="feature-icon">🎯</div>
-    <h3>Direct AI Integration</h3>
-    <p>Works with OpenAI, Anthropic, Google, Groq, and any Prism-supported provider. Switch providers without changing your code.</p>
+    <div class="feature-icon">🔌</div>
+    <h3>Provider Agnostic</h3>
+    <p>Works with OpenAI, Anthropic, Google, or any LLM. Switch providers without changing your code. Your data stays in your database.</p>
   </div>
 
   <div class="feature">
-    <div class="feature-icon">🌊</div>
-    <h3>Elegant Streaming</h3>
-    <p>Handle real-time AI responses elegantly. Automatic chunk collection, progress tracking, and error recovery built-in.</p>
+    <div class="feature-icon">📡</div>
+    <h3>Streaming Made Simple</h3>
+    <p>Handle real-time AI responses elegantly. Automatic message chunking, progress tracking, and error recovery built-in.</p>
+  </div>
+
+  <div class="feature">
+    <div class="feature-icon">🧠</div>
+    <h3>Automatic Context Management</h3>
+    <p>Your entire conversation history flows to AI providers automatically. No manual message extraction or formatting—just natural conversation.</p>
   </div>
 
   <div class="feature">
     <div class="feature-icon">🛠️</div>
-    <h3>Tool & Function Support</h3>
-    <p>Full support for AI tool calling. Converse Prism automatically handles tool call and result message types.</p>
+    <h3>Built-in Function Calling</h3>
+    <p>Full support for AI tool calling with automatic message type handling. Tool calls and results are tracked just like any other message.</p>
   </div>
 
   <div class="feature">
     <div class="feature-icon">📊</div>
-    <h3>Metadata Extraction</h3>
-    <p>Automatically extracts and stores token counts, model info, and response metadata. Track usage without extra code.</p>
-  </div>
-
-  <div class="feature">
-    <div class="feature-icon">🚀</div>
-    <h3>Drop-in Enhancement</h3>
-    <p>Just change one trait in your User model. All existing Converse code continues working, plus you get Prism superpowers.</p>
+    <h3>Laravel Native</h3>
+    <p>Built on Laravel Converse, it feels like Laravel code should. Use familiar patterns like $conversation->toPrismText() throughout your app.</p>
   </div>
 </div>
 
