@@ -1,6 +1,6 @@
-# Converse-Prism Integration Tests
+# Converse Prism Integration Tests
 
-This test suite validates the integration between Laravel Converse and Prism PHP.
+This test suite validates the integration between Converse and Prism PHP.
 
 ## Test Structure
 
