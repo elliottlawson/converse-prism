@@ -155,4 +155,4 @@ $stream = $conversation->streamPrismResponse([
 
 - Explore [Advanced Features](advanced-features.md) for tools and structured outputs
 - See [Examples](examples.md) for complete streaming implementations
-- Check the [API Reference](api-reference.md) for all streaming methods 
+- Check the [API Reference](/api/) for all streaming methods 
