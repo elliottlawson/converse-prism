@@ -1,16 +1,35 @@
+# Composer
 /vendor/
-/node_modules/
-/.idea
-/.vscode
-/.fleet
-/coverage
-.env
-.env.backup
-.env.production
+composer.phar
+
+# PHP
 .phpunit.result.cache
 .php-cs-fixer.cache
-composer.lock
-package-lock.json
-testbench.yaml
+
+# IDE
+.idea/
+.vscode/
+.fleet/
+*.swp
+*.swo
+
+# OS
 .DS_Store
 Thumbs.db
+
+# Node / Documentation
+node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+package-lock.json
+yarn.lock
+
+# Environment
+.env
+.env.*
+.env.backup
+.env.production
+
+# Testing
+/coverage
+testbench.yaml
