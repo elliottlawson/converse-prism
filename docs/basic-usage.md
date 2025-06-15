@@ -25,7 +25,7 @@ $conversation->addPrismResponse($response);
 
 This eliminates the boilerplate of manually extracting and formatting messages for every API call.
 
-> For core Converse usage (starting conversations, adding messages, etc.), see the [Converse documentation](https://github.com/elliottlawson/converse).
+> For core Converse usage (starting conversations, adding messages, etc.), see the [Converse documentation](https://converse-php.netlify.app/guide/conversations.html).
 
 ## Making AI Requests
 
