@@ -153,10 +153,9 @@ trait InteractsWithPrism
 
         $prismRequest = Prism::text();
 
-        // Add system messages as a single system prompt if present
+        // Add system messages individually to preserve them as separate prompts
         if ($systemMessages->isNotEmpty()) {
-            $systemPrompt = $systemMessages->pluck('content')->implode("\n\n");
-            $prismRequest = $prismRequest->withSystemPrompt($systemPrompt);
+            $prismRequest = $prismRequest->withSystemPrompts($systemMessages->values()->all());
         }
 
         // Add other messages
@@ -185,10 +184,9 @@ trait InteractsWithPrism
 
         $prismRequest = Prism::structured();
 
-        // Add system messages as a single system prompt if present
+        // Add system messages individually to preserve them as separate prompts
         if ($systemMessages->isNotEmpty()) {
-            $systemPrompt = $systemMessages->pluck('content')->implode("\n\n");
-            $prismRequest = $prismRequest->withSystemPrompt($systemPrompt);
+            $prismRequest = $prismRequest->withSystemPrompts($systemMessages->values()->all());
         }
 
         // Add other messages

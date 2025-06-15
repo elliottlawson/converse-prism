@@ -308,7 +308,7 @@ describe('Fluent Interface', function () {
 });
 
 describe('System Message Handling in toPrism Methods', function () {
-    it('separates system messages and passes them to withSystemPrompt for toPrismText', function () {
+    it('separates system messages and passes them individually to withSystemPrompts for toPrismText', function () {
         // Add multiple system messages mixed with other messages
         $this->conversation
             ->addSystemMessage('You are a helpful assistant')
@@ -322,14 +322,20 @@ describe('System Message Handling in toPrism Methods', function () {
         // Use reflection to verify the internal state
         $reflection = new ReflectionClass($pendingRequest);
 
-        // Check if withSystemPrompt was called with combined system messages
-        if ($reflection->hasProperty('systemPrompt')) {
-            $systemPromptProperty = $reflection->getProperty('systemPrompt');
-            $systemPromptProperty->setAccessible(true);
-            $systemPrompt = $systemPromptProperty->getValue($pendingRequest);
+        // Check if withSystemPrompts was called with individual system messages
+        if ($reflection->hasProperty('systemPrompts')) {
+            $systemPromptsProperty = $reflection->getProperty('systemPrompts');
+            $systemPromptsProperty->setAccessible(true);
+            $systemPrompts = $systemPromptsProperty->getValue($pendingRequest);
 
-            // Verify system messages are combined with double newlines
-            expect($systemPrompt)->toBe("You are a helpful assistant\n\nYou speak in a friendly tone\n\nYou provide concise answers");
+            // Verify we have 3 individual system messages
+            expect($systemPrompts)->toHaveCount(3);
+            expect($systemPrompts[0])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[0]->content)->toBe('You are a helpful assistant');
+            expect($systemPrompts[1])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[1]->content)->toBe('You speak in a friendly tone');
+            expect($systemPrompts[2])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[2]->content)->toBe('You provide concise answers');
         }
 
         // Check that only non-system messages are passed to withMessages
@@ -345,7 +351,7 @@ describe('System Message Handling in toPrism Methods', function () {
         }
     });
 
-    it('separates system messages and passes them to withSystemPrompt for toPrismStructured', function () {
+    it('separates system messages and passes them individually to withSystemPrompts for toPrismStructured', function () {
         // Add multiple system messages
         $this->conversation
             ->addSystemMessage('You extract structured data')
@@ -357,14 +363,18 @@ describe('System Message Handling in toPrism Methods', function () {
         // Use reflection to verify the internal state
         $reflection = new ReflectionClass($pendingRequest);
 
-        // Check if withSystemPrompt was called
-        if ($reflection->hasProperty('systemPrompt')) {
-            $systemPromptProperty = $reflection->getProperty('systemPrompt');
-            $systemPromptProperty->setAccessible(true);
-            $systemPrompt = $systemPromptProperty->getValue($pendingRequest);
+        // Check if withSystemPrompts was called with individual system messages
+        if ($reflection->hasProperty('systemPrompts')) {
+            $systemPromptsProperty = $reflection->getProperty('systemPrompts');
+            $systemPromptsProperty->setAccessible(true);
+            $systemPrompts = $systemPromptsProperty->getValue($pendingRequest);
 
-            // Verify system messages are combined
-            expect($systemPrompt)->toBe("You extract structured data\n\nYou return JSON format");
+            // Verify we have 2 individual system messages
+            expect($systemPrompts)->toHaveCount(2);
+            expect($systemPrompts[0])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[0]->content)->toBe('You extract structured data');
+            expect($systemPrompts[1])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[1]->content)->toBe('You return JSON format');
         }
 
         // Check messages
@@ -388,14 +398,14 @@ describe('System Message Handling in toPrism Methods', function () {
 
         $reflection = new ReflectionClass($pendingRequest);
 
-        // Check system prompt
-        if ($reflection->hasProperty('systemPrompt')) {
-            $systemPromptProperty = $reflection->getProperty('systemPrompt');
-            $systemPromptProperty->setAccessible(true);
-            $systemPrompt = $systemPromptProperty->getValue($pendingRequest);
+        // Check system prompts
+        if ($reflection->hasProperty('systemPrompts')) {
+            $systemPromptsProperty = $reflection->getProperty('systemPrompts');
+            $systemPromptsProperty->setAccessible(true);
+            $systemPrompts = $systemPromptsProperty->getValue($pendingRequest);
 
-            // No system prompt should be set
-            expect($systemPrompt)->toBeNull();
+            // No system prompts should be set
+            expect($systemPrompts)->toBeEmpty();
         }
 
         // Check messages
@@ -420,14 +430,18 @@ describe('System Message Handling in toPrism Methods', function () {
 
         $reflection = new ReflectionClass($pendingRequest);
 
-        // Check system prompt
-        if ($reflection->hasProperty('systemPrompt')) {
-            $systemPromptProperty = $reflection->getProperty('systemPrompt');
-            $systemPromptProperty->setAccessible(true);
-            $systemPrompt = $systemPromptProperty->getValue($pendingRequest);
+        // Check system prompts
+        if ($reflection->hasProperty('systemPrompts')) {
+            $systemPromptsProperty = $reflection->getProperty('systemPrompts');
+            $systemPromptsProperty->setAccessible(true);
+            $systemPrompts = $systemPromptsProperty->getValue($pendingRequest);
 
-            // System prompt should contain both messages
-            expect($systemPrompt)->toBe("System instruction 1\n\nSystem instruction 2");
+            // Should have 2 individual system messages
+            expect($systemPrompts)->toHaveCount(2);
+            expect($systemPrompts[0])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[0]->content)->toBe('System instruction 1');
+            expect($systemPrompts[1])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[1]->content)->toBe('System instruction 2');
         }
 
         // Check messages
