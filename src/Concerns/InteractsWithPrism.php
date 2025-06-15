@@ -180,6 +180,4 @@ trait InteractsWithPrism
 
         return Prism::embeddings()->fromInput($input);
     }
-
-
 }
