@@ -163,10 +163,52 @@ public function findSimilarMessages(Conversation $conversation, Message $message
 }
 ```
 
+## System Message Handling
+
+Converse Prism intelligently handles system messages when converting conversations to Prism requests. This is particularly important for providers like Anthropic that require system messages to be passed separately from the conversation messages.
+
+### Automatic Separation
+
+When you call `toPrismText()` or `toPrismStructured()`, system messages are automatically:
+1. Extracted from the conversation history
+2. Preserved as individual messages (not combined)
+3. Passed to Prism via `withSystemPrompts()`
+4. Kept separate from other message types
+
+```php
+$conversation
+    ->addSystemMessage('You are a helpful coding assistant')
+    ->addSystemMessage('Use PHP 8.2+ features')
+    ->addSystemMessage('Follow PSR-12 coding standards')
+    ->addUserMessage('Write a function to calculate factorial');
+
+// System messages are automatically passed to withSystemPrompts()
+$response = $conversation
+    ->toPrismText()
+    ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
+    ->asText();
+```
+
+### Multiple System Messages
+
+Unlike combining system messages into a single prompt, Converse Prism preserves each system message individually. This allows:
+- Better organization of system instructions
+- Easy addition/removal of specific behaviors
+- Provider-specific handling of multiple system prompts
+- Clearer intent for each instruction
+
+### Provider Compatibility
+
+This automatic handling ensures compatibility across all providers:
+- **Anthropic**: System messages are passed via the `system` parameter
+- **OpenAI**: System messages are included in the messages array with role "system"
+- **Other Providers**: Each provider's specific requirements are handled by Prism
+
 ## Message Type Handling
 
 Converse Prism automatically handles different message types through its methods:
 
+- **System Messages**: Automatically separated and passed via `withSystemPrompts()`
 - **Tool Calls**: `addPrismResponse()` detects and stores tool call messages with proper metadata
 - **Tool Results**: `addToolResultMessage()` creates properly formatted tool result messages
 - **Structured Data**: `addPrismResponse()` automatically serializes structured response data

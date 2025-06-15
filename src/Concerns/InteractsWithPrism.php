@@ -9,6 +9,7 @@ use Prism\Prism\Embeddings\PendingRequest as PendingEmbeddingRequest;
 use Prism\Prism\Prism;
 use Prism\Prism\Structured\PendingRequest as PendingStructuredRequest;
 use Prism\Prism\Text\PendingRequest as PendingTextRequest;
+use Prism\Prism\ValueObjects\Messages\SystemMessage;
 
 trait InteractsWithPrism
 {
@@ -144,7 +145,25 @@ trait InteractsWithPrism
             throw new \BadMethodCallException('toPrismText can only be called on Conversation model');
         }
 
-        return Prism::text()->withMessages($this->toPrismMessages());
+        $prismMessages = collect($this->toPrismMessages());
+
+        // Separate system messages from other messages
+        $systemMessages = $prismMessages->filter(fn ($message) => $message instanceof SystemMessage);
+        $otherMessages = $prismMessages->reject(fn ($message) => $message instanceof SystemMessage);
+
+        $prismRequest = Prism::text();
+
+        // Add system messages individually to preserve them as separate prompts
+        if ($systemMessages->isNotEmpty()) {
+            $prismRequest = $prismRequest->withSystemPrompts($systemMessages->values()->all());
+        }
+
+        // Add other messages
+        if ($otherMessages->isNotEmpty()) {
+            $prismRequest = $prismRequest->withMessages($otherMessages->values()->all());
+        }
+
+        return $prismRequest;
     }
 
     /**
@@ -157,7 +176,25 @@ trait InteractsWithPrism
             throw new \BadMethodCallException('toPrismStructured can only be called on Conversation model');
         }
 
-        return Prism::structured()->withMessages($this->toPrismMessages());
+        $prismMessages = collect($this->toPrismMessages());
+
+        // Separate system messages from other messages
+        $systemMessages = $prismMessages->filter(fn ($message) => $message instanceof SystemMessage);
+        $otherMessages = $prismMessages->reject(fn ($message) => $message instanceof SystemMessage);
+
+        $prismRequest = Prism::structured();
+
+        // Add system messages individually to preserve them as separate prompts
+        if ($systemMessages->isNotEmpty()) {
+            $prismRequest = $prismRequest->withSystemPrompts($systemMessages->values()->all());
+        }
+
+        // Add other messages
+        if ($otherMessages->isNotEmpty()) {
+            $prismRequest = $prismRequest->withMessages($otherMessages->values()->all());
+        }
+
+        return $prismRequest;
     }
 
     /**

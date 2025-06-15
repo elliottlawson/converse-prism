@@ -306,3 +306,154 @@ describe('Fluent Interface', function () {
         expect($lastMessage->metadata)->toMatchArray($metadata);
     });
 });
+
+describe('System Message Handling in toPrism Methods', function () {
+    it('separates system messages and passes them individually to withSystemPrompts for toPrismText', function () {
+        // Add multiple system messages mixed with other messages
+        $this->conversation
+            ->addSystemMessage('You are a helpful assistant')
+            ->addSystemMessage('You speak in a friendly tone')
+            ->addUserMessage('Hello, how are you?')
+            ->addAssistantMessage('I am doing well, thank you!')
+            ->addSystemMessage('You provide concise answers');
+
+        $pendingRequest = $this->conversation->toPrismText();
+
+        // Use reflection to verify the internal state
+        $reflection = new ReflectionClass($pendingRequest);
+
+        // Check if withSystemPrompts was called with individual system messages
+        if ($reflection->hasProperty('systemPrompts')) {
+            $systemPromptsProperty = $reflection->getProperty('systemPrompts');
+            $systemPromptsProperty->setAccessible(true);
+            $systemPrompts = $systemPromptsProperty->getValue($pendingRequest);
+
+            // Verify we have 3 individual system messages
+            expect($systemPrompts)->toHaveCount(3);
+            expect($systemPrompts[0])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[0]->content)->toBe('You are a helpful assistant');
+            expect($systemPrompts[1])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[1]->content)->toBe('You speak in a friendly tone');
+            expect($systemPrompts[2])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[2]->content)->toBe('You provide concise answers');
+        }
+
+        // Check that only non-system messages are passed to withMessages
+        if ($reflection->hasProperty('messages')) {
+            $messagesProperty = $reflection->getProperty('messages');
+            $messagesProperty->setAccessible(true);
+            $messages = $messagesProperty->getValue($pendingRequest);
+
+            // Should have 2 messages (user and assistant)
+            expect($messages)->toHaveCount(2);
+            expect($messages[0])->toBeInstanceOf(UserMessage::class);
+            expect($messages[1])->toBeInstanceOf(AssistantMessage::class);
+        }
+    });
+
+    it('separates system messages and passes them individually to withSystemPrompts for toPrismStructured', function () {
+        // Add multiple system messages
+        $this->conversation
+            ->addSystemMessage('You extract structured data')
+            ->addSystemMessage('You return JSON format')
+            ->addUserMessage('Extract data from this text');
+
+        $pendingRequest = $this->conversation->toPrismStructured();
+
+        // Use reflection to verify the internal state
+        $reflection = new ReflectionClass($pendingRequest);
+
+        // Check if withSystemPrompts was called with individual system messages
+        if ($reflection->hasProperty('systemPrompts')) {
+            $systemPromptsProperty = $reflection->getProperty('systemPrompts');
+            $systemPromptsProperty->setAccessible(true);
+            $systemPrompts = $systemPromptsProperty->getValue($pendingRequest);
+
+            // Verify we have 2 individual system messages
+            expect($systemPrompts)->toHaveCount(2);
+            expect($systemPrompts[0])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[0]->content)->toBe('You extract structured data');
+            expect($systemPrompts[1])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[1]->content)->toBe('You return JSON format');
+        }
+
+        // Check messages
+        if ($reflection->hasProperty('messages')) {
+            $messagesProperty = $reflection->getProperty('messages');
+            $messagesProperty->setAccessible(true);
+            $messages = $messagesProperty->getValue($pendingRequest);
+
+            // Should only have the user message
+            expect($messages)->toHaveCount(1);
+            expect($messages[0])->toBeInstanceOf(UserMessage::class);
+        }
+    });
+
+    it('handles conversations with no system messages', function () {
+        $this->conversation
+            ->addUserMessage('Hello')
+            ->addAssistantMessage('Hi there');
+
+        $pendingRequest = $this->conversation->toPrismText();
+
+        $reflection = new ReflectionClass($pendingRequest);
+
+        // Check system prompts
+        if ($reflection->hasProperty('systemPrompts')) {
+            $systemPromptsProperty = $reflection->getProperty('systemPrompts');
+            $systemPromptsProperty->setAccessible(true);
+            $systemPrompts = $systemPromptsProperty->getValue($pendingRequest);
+
+            // No system prompts should be set
+            expect($systemPrompts)->toBeEmpty();
+        }
+
+        // Check messages
+        if ($reflection->hasProperty('messages')) {
+            $messagesProperty = $reflection->getProperty('messages');
+            $messagesProperty->setAccessible(true);
+            $messages = $messagesProperty->getValue($pendingRequest);
+
+            // All messages should be in the messages array
+            expect($messages)->toHaveCount(2);
+            expect($messages[0])->toBeInstanceOf(UserMessage::class);
+            expect($messages[1])->toBeInstanceOf(AssistantMessage::class);
+        }
+    });
+
+    it('handles conversations with only system messages', function () {
+        $this->conversation
+            ->addSystemMessage('System instruction 1')
+            ->addSystemMessage('System instruction 2');
+
+        $pendingRequest = $this->conversation->toPrismText();
+
+        $reflection = new ReflectionClass($pendingRequest);
+
+        // Check system prompts
+        if ($reflection->hasProperty('systemPrompts')) {
+            $systemPromptsProperty = $reflection->getProperty('systemPrompts');
+            $systemPromptsProperty->setAccessible(true);
+            $systemPrompts = $systemPromptsProperty->getValue($pendingRequest);
+
+            // Should have 2 individual system messages
+            expect($systemPrompts)->toHaveCount(2);
+            expect($systemPrompts[0])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[0]->content)->toBe('System instruction 1');
+            expect($systemPrompts[1])->toBeInstanceOf(SystemMessage::class);
+            expect($systemPrompts[1]->content)->toBe('System instruction 2');
+        }
+
+        // Check messages
+        if ($reflection->hasProperty('messages')) {
+            $messagesProperty = $reflection->getProperty('messages');
+            $messagesProperty->setAccessible(true);
+            $messages = $messagesProperty->getValue($pendingRequest);
+
+            // Messages array should be empty or not set
+            if ($messages !== null) {
+                expect($messages)->toBeEmpty();
+            }
+        }
+    });
+});
