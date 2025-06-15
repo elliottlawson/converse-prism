@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
+  srcExclude: ['**/vendor/**'],
   title: 'Converse Prism',
   description: 'Seamless Prism PHP integration for Laravel Converse',
   base: '/',
