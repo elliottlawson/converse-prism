@@ -1,10 +1,10 @@
 # Basic Usage
 
-This guide covers the core features of Converse-Prism and common usage patterns.
+This guide covers the core features of Converse Prism and common usage patterns.
 
 ## The Magic: Automatic Message Passing
 
-The most powerful feature of Converse-Prism is **automatic message passing**. When you call `toPrismText()`, `toPrismStructured()`, or `toPrismEmbeddings()`, the package automatically:
+The most powerful feature of Converse Prism is **automatic message passing**. When you call `toPrismText()`, `toPrismStructured()`, or `toPrismEmbeddings()`, the package automatically:
 
 1. Retrieves all messages from the conversation
 2. Converts them to Prism's message format
@@ -64,7 +64,7 @@ $conversation = $user->conversations()->latest()->first();
 
 ### Message Types
 
-Converse-Prism supports all standard message roles:
+Converse Prism supports all standard message roles:
 
 ```php
 // System message - Sets the AI's behavior
@@ -127,7 +127,7 @@ $conversation->addPrismResponse($response->text);
 
 ### Using Different Providers
 
-Converse-Prism works with any provider supported by Prism:
+Converse Prism works with any provider supported by Prism:
 
 ```php
 // OpenAI

@@ -1,8 +1,8 @@
-# Converse-Prism Documentation
+# Converse Prism Documentation
 
 <div align="center">
 
-**Seamless integration between Laravel Converse and Prism PHP for AI conversations**
+**Seamless integration between Converse and Prism PHP for AI conversations**
 
 [![Tests](https://github.com/elliottlawson/converse-prism/workflows/Tests/badge.svg)](https://github.com/elliottlawson/converse-prism/actions)
 [![Latest Stable Version](https://poser.pugx.org/elliottlawson/converse-prism/v)](https://packagist.org/packages/elliottlawson/converse-prism)
@@ -13,7 +13,7 @@
 
 ## Welcome
 
-Converse-Prism brings together two powerful Laravel packages: [Laravel Converse](https://github.com/elliottlawson/converse) for conversation management and [Prism PHP](https://github.com/echolabsdev/prism) for AI provider integration. 
+Converse Prism brings together two powerful Laravel packages: [Converse](https://github.com/elliottlawson/converse) for conversation management and [Prism PHP](https://github.com/echolabsdev/prism) for AI provider integration. 
 
 This integration gives you the best of both worlds:
 - **From Converse**: Database-backed conversations, automatic context management, and Laravel-native features
@@ -44,7 +44,7 @@ Real-world implementation patterns
 
 </div>
 
-## Why Converse-Prism?
+## Why Converse Prism?
 
 ### The Problem
 
@@ -57,10 +57,10 @@ Doing this manually means writing boilerplate code for every interaction.
 
 ### The Solution
 
-Converse-Prism eliminates the boilerplate by providing a fluent interface that connects your conversation models directly to AI providers:
+Converse Prism eliminates the boilerplate by providing a fluent interface that connects your conversation models directly to AI providers:
 
 ```php
-// Without Converse-Prism
+// Without Converse Prism
 $messages = $conversation->messages->map(function ($message) {
     return match($message->role) {
         'system' => new SystemMessage($message->content),
@@ -86,7 +86,7 @@ $conversation->messages()->create([
     ]
 ]);
 
-// With Converse-Prism
+// With Converse Prism
 $response = $conversation
     ->toPrismText()
     ->using(Provider::Anthropic, 'claude-3-5-sonnet-latest')
@@ -118,6 +118,6 @@ Works with any AI provider supported by Prism: OpenAI, Anthropic, Google, and mo
 
 ## Next Steps
 
-Ready to get started? Head to the [Getting Started](getting-started.md) guide to install Converse-Prism and create your first AI conversation.
+Ready to get started? Head to the [Installation](installation.md) guide to install Converse Prism and create your first AI conversation.
 
-For those already familiar with Laravel Converse, check out the [Migration Guide](migration-guide.md) to upgrade your existing code. 
+For those already familiar with Converse, check out the [Migration from Converse](migration.md) guide to upgrade your existing code. 

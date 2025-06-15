@@ -1,6 +1,6 @@
 export default {
-  title: 'Converse-Prism',
-  description: 'Seamless integration between Laravel Converse and Prism PHP for AI conversations',
+  title: 'Converse Prism',
+  description: 'Seamless integration between Converse and Prism PHP for AI conversations',
   base: '/',
   
   head: [
@@ -11,16 +11,18 @@ export default {
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Documentation', link: '/getting-started' },
+      { text: 'Documentation', link: '/installation' },
       { text: 'GitHub', link: 'https://github.com/elliottlawson/converse-prism' }
     ],
     
     sidebar: [
       {
-        text: 'Introduction',
+        text: 'Getting Started',
         items: [
           { text: 'Overview', link: '/' },
-          { text: 'Getting Started', link: '/getting-started' }
+          { text: 'Installation', link: '/installation' },
+          { text: 'Setup', link: '/setup' },
+          { text: 'Migration from Converse', link: '/migration' }
         ]
       },
       {
@@ -35,8 +37,7 @@ export default {
         text: 'Reference',
         items: [
           { text: 'API Reference', link: '/api-reference' },
-          { text: 'Examples', link: '/examples' },
-          { text: 'Migration Guide', link: '/migration-guide' }
+          { text: 'Examples', link: '/examples' }
         ]
       }
     ],

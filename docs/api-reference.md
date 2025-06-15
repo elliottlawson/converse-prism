@@ -1,6 +1,6 @@
 # API Reference
 
-Complete reference for all Converse-Prism methods and classes.
+Complete reference for all Converse Prism methods and classes.
 
 ## Conversation Methods
 
@@ -207,7 +207,7 @@ public function getMessage(): Message
 
 ## Inherited Methods
 
-All standard Laravel Converse methods remain available:
+All standard Converse methods remain available:
 
 ### Message Management
 
@@ -299,7 +299,7 @@ The package automatically converts to these Prism types:
 
 ## Events
 
-Converse-Prism triggers all standard Laravel Converse events:
+Converse Prism triggers all standard Converse events:
 
 ```php
 // Conversation events
@@ -404,12 +404,12 @@ if ($approximateTokens > 3000) {
 
 - **PHP:** 8.2+
 - **Laravel:** 11.0+ or 12.0+
-- **Laravel Converse:** ^0.1
+- **Converse:** ^0.1
 - **Prism PHP:** ^0.71
 
 ## Support
 
 For issues or questions:
 - [GitHub Issues](https://github.com/elliottlawson/converse-prism/issues)
-- [Laravel Converse Docs](https://converse-php.netlify.app)
+- [Converse Docs](https://converse-php.netlify.app)
 - [Prism PHP Docs](https://github.com/echolabsdev/prism) 

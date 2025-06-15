@@ -4,7 +4,7 @@ This guide covers advanced features including tool/function calling, structured 
 
 ## Tool/Function Calling
 
-Converse-Prism fully supports Prism's tool calling capabilities, automatically handling the message types for tool calls and results.
+Converse Prism fully supports Prism's tool calling capabilities, automatically handling the message types for tool calls and results.
 
 ### Basic Tool Usage
 

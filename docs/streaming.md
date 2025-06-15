@@ -4,7 +4,7 @@ Real-time streaming responses provide a better user experience by showing AI res
 
 ## Overview
 
-Converse-Prism provides elegant streaming support through the `PrismStream` class, which handles:
+Converse Prism provides elegant streaming support through the `PrismStream` class, which handles:
 - Automatic chunk collection
 - Progress tracking
 - Database persistence

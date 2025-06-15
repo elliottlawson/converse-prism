@@ -1,13 +1,13 @@
-# Converse-Prism
+# Converse Prism
 
 [![Tests](https://github.com/elliottlawson/converse-prism/workflows/Tests/badge.svg)](https://github.com/elliottlawson/converse-prism/actions)
 [![Latest Stable Version](https://poser.pugx.org/elliottlawson/converse-prism/v)](https://packagist.org/packages/elliottlawson/converse-prism)
 [![Total Downloads](https://poser.pugx.org/elliottlawson/converse-prism/downloads)](https://packagist.org/packages/elliottlawson/converse-prism)
 [![License](https://poser.pugx.org/elliottlawson/converse-prism/license)](https://packagist.org/packages/elliottlawson/converse-prism)
 
-**Seamless integration between Laravel Converse and Prism PHP for AI conversations.**
+**Seamless integration between Converse and Prism PHP for AI conversations.**
 
-Converse-Prism extends [Laravel Converse](https://github.com/elliottlawson/converse) with a fluent API to work directly with [Prism PHP](https://github.com/echolabsdev/prism), supporting both standard and streaming responses.
+Converse Prism extends [Converse](https://github.com/elliottlawson/converse) with a fluent API to work directly with [Prism PHP](https://github.com/echolabsdev/prism), supporting both standard and streaming responses.
 
 ## 📚 Documentation
 
@@ -51,7 +51,7 @@ composer require elliottlawson/converse-prism
 
 ## Quick Start
 
-Replace the Converse trait with the Converse-Prism trait:
+Replace the Converse trait with the Converse Prism trait:
 
 ```php
 use ElliottLawson\ConversePrism\Concerns\HasAIConversations;
@@ -96,7 +96,7 @@ $stream->complete($response);
 
 - PHP 8.2+
 - Laravel 11.0+ or 12.0+
-- [Laravel Converse](https://github.com/elliottlawson/converse) ^0.1
+- [Converse](https://github.com/elliottlawson/converse) ^0.1
 - [Prism PHP](https://github.com/echolabsdev/prism) ^0.71
 
 ## Documentation
@@ -107,17 +107,17 @@ $stream->complete($response);
 - [Advanced Features](docs/advanced-features.md) - Tools, structured output, embeddings
 - [API Reference](docs/api-reference.md) - Complete method documentation
 - [Examples](docs/examples.md) - Real-world implementations
-- [Migration Guide](docs/migration-guide.md) - Upgrading from Converse
+- [Migration from Converse](docs/migration.md) - Upgrading from Converse
 
-## Why Converse-Prism?
+## Why Converse Prism?
 
-If you're already using Laravel Converse for conversation management and want to:
+If you're already using Converse for conversation management and want to:
 - Add direct AI integration without writing boilerplate
 - Support multiple AI providers with one interface
 - Implement streaming responses easily
 - Use advanced features like tool calling and structured output
 
-Then Converse-Prism is for you. It's a drop-in enhancement that preserves all your existing Converse functionality while adding powerful Prism integration.
+Then Converse Prism is for you. It's a drop-in enhancement that preserves all your existing Converse functionality while adding powerful Prism integration.
 
 ## License
 
