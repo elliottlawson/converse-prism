@@ -587,4 +587,4 @@ class CustomMessage extends Message
 
 - See [Examples](examples.md) for complete implementations
 - Review the [API Reference](api-reference.md) for all available methods
-- Learn about [Migration](migration-guide.md) from standard Converse 
+- Learn about [Migration](migration.md) from standard Converse 
