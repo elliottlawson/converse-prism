@@ -168,20 +168,20 @@ broadcast(new MessageCompleted($conversation, $message))->toOthers();
 
 ```jsx
 import { useState } from 'react';
-import { useChannel } from '@mayank1513/laravel-echo-react';
+import { useEcho } from '@laravel/echo-react';
 
 function StreamingMessage({ conversationId }) {
     const [message, setMessage] = useState('');
     
     // Subscribe to the conversation channel
-    useChannel(`conversation.${conversationId}`)
-        .listen('MessageChunkReceived', (e) => {
-            setMessage(prev => prev + e.chunk);
-        })
-        .listen('MessageCompleted', (e) => {
-            // Handle completion
-            console.log('Message completed:', e.message);
-        });
+    useEcho(`conversation.${conversationId}`, 'MessageChunkReceived', (e) => {
+        setMessage(prev => prev + e.chunk);
+    });
+    
+    useEcho(`conversation.${conversationId}`, 'MessageCompleted', (e) => {
+        // Handle completion
+        console.log('Message completed:', e.message);
+    });
     
     return <div>{message}</div>;
 }
