@@ -11,36 +11,45 @@ export default {
   themeConfig: {
     nav: [
       { text: 'Home', link: '/' },
-      { text: 'Documentation', link: '/setup' },
+      { text: 'Guide', link: '/installation' },
+      { text: 'API', link: '/api/' },
       { text: 'GitHub', link: 'https://github.com/elliottlawson/converse-prism' }
     ],
     
-    sidebar: [
-      {
-        text: 'Getting Started',
-        items: [
-          { text: 'Overview', link: '/' },
-          { text: 'Installation', link: '/installation' },
-          { text: 'Setup', link: '/setup' },
-          { text: 'Migration from Converse', link: '/migration' }
-        ]
-      },
-      {
-        text: 'Guide',
-        items: [
-          { text: 'Basic Usage', link: '/basic-usage' },
-          { text: 'Streaming', link: '/streaming' },
-          { text: 'Advanced Features', link: '/advanced-features' }
-        ]
-      },
-      {
-        text: 'Reference',
-        items: [
-          { text: 'API Reference', link: '/api-reference' },
-          { text: 'Examples', link: '/examples' }
-        ]
-      }
-    ],
+    sidebar: {
+      '/': [
+        {
+          text: 'Getting Started',
+          items: [
+            { text: 'Overview', link: '/' },
+            { text: 'Installation', link: '/installation' },
+            { text: 'Setup', link: '/setup' },
+            { text: 'Migration from Converse', link: '/migration' }
+          ]
+        },
+        {
+          text: 'Guide',
+          items: [
+            { text: 'Basic Usage', link: '/basic-usage' },
+            { text: 'Streaming', link: '/streaming' },
+            { text: 'Advanced Features', link: '/advanced-features' },
+            { text: 'Examples', link: '/examples' }
+          ]
+        }
+      ],
+      '/api/': [
+        {
+          text: 'API Reference',
+          items: [
+            { text: 'Overview', link: '/api/' },
+            { text: 'Conversations', link: '/api/conversations' },
+            { text: 'Messages', link: '/api/messages' },
+            { text: 'PrismStream', link: '/api/prism-stream' },
+            { text: 'Metadata', link: '/api/metadata' }
+          ]
+        }
+      ]
+    },
     
     socialLinks: [
       { icon: 'github', link: 'https://github.com/elliottlawson/converse-prism' }
