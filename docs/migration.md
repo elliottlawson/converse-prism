@@ -47,42 +47,6 @@ $messages = $conversation->messages;
 $lastMessage = $conversation->lastMessage;
 ```
 
-## Gradual Adoption
-
-You can migrate at your own pace. Use your existing AI integration for current features while adopting Prism for new ones:
-
-```php
-// Old way - still works
-$response = $yourAiClient->chat([
-    'messages' => $conversation->messages->toArray()
-]);
-$conversation->addAssistantMessage($response['content']);
-
-// New way - when you're ready
-$response = $conversation
-    ->toPrismText()
-    ->using(Provider::OpenAI, 'gpt-4')
-    ->asText();
-$conversation->addPrismResponse($response->text);
-```
-
-## Custom Models
-
-If you've extended the Conversation or Message models, they continue to work:
-
-```php
-class User extends Authenticatable
-{
-    use HasAIConversations;
-    
-    // Use your custom model
-    protected function conversationModel(): string
-    {
-        return CustomConversation::class;
-    }
-}
-```
-
 ## Database
 
 No database changes required. Converse Prism uses the same tables as Converse.
