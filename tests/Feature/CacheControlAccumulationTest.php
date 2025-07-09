@@ -11,10 +11,10 @@
 use ElliottLawson\ConversePrism\Models\Conversation;
 use ElliottLawson\ConversePrism\Models\Message;
 use ElliottLawson\ConversePrism\Tests\Models\TestUser;
-use Prism\Prism\ValueObjects\Messages\UserMessage;
+use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\SystemMessage;
-use Prism\Prism\Enums\FinishReason;
+use Prism\Prism\ValueObjects\Messages\UserMessage;
 use Prism\Prism\ValueObjects\Meta;
 use Prism\Prism\ValueObjects\Usage;
 
@@ -43,8 +43,11 @@ it('does not persist cache control metadata when saving messages', function () {
     $response = new class
     {
         public $text = 'Response with cache control';
+
         public $usage;
+
         public $finishReason = FinishReason::Stop;
+
         public $meta;
 
         public function __construct()
@@ -66,7 +69,7 @@ it('does not persist cache control metadata when saving messages', function () {
         'cache_type' => 'ephemeral',
         'cache_control' => ['type' => 'ephemeral'],
         'provider_options' => ['anthropic' => ['cache_control' => ['type' => 'ephemeral']]],
-        'other_metadata' => 'should persist'
+        'other_metadata' => 'should persist',
     ]);
 
     // Get the saved message
@@ -86,8 +89,8 @@ it('strips provider options when reconstructing messages from storage', function
         'metadata' => [
             'provider_options' => ['anthropic' => ['cache_control' => ['type' => 'ephemeral']]],
             'cache_control' => ['type' => 'ephemeral'],
-            'normal_metadata' => 'keep this'
-        ]
+            'normal_metadata' => 'keep this',
+        ],
     ]);
 
     // Convert to Prism message
@@ -119,8 +122,11 @@ it('prevents cache control accumulation in conversation history', function () {
         $response = new class($i)
         {
             public $text;
+
             public $usage;
+
             public $finishReason = FinishReason::Stop;
+
             public $meta;
 
             public function __construct($i)
@@ -141,7 +147,7 @@ it('prevents cache control accumulation in conversation history', function () {
         $this->conversation->addPrismResponse($response, [
             'cache_type' => 'ephemeral',
             'cache_control' => ['type' => 'ephemeral'],
-            'provider_options' => ['anthropic' => ['cache_control' => ['type' => 'ephemeral']]]
+            'provider_options' => ['anthropic' => ['cache_control' => ['type' => 'ephemeral']]],
         ]);
     }
 
@@ -188,7 +194,7 @@ it('handles tool call messages without persisting cache control', function () {
     $this->conversation->addPrismResponse($response, [
         'cache_control' => ['type' => 'ephemeral'],
         'provider_options' => ['anthropic' => ['cache_control' => ['type' => 'ephemeral']]],
-        'tool_metadata' => 'should persist'
+        'tool_metadata' => 'should persist',
     ]);
 
     $message = $this->conversation->messages()->latest()->first();
@@ -215,7 +221,7 @@ it('handles tool result messages without persisting cache control', function () 
     $this->conversation->addPrismResponse($response, [
         'cache_control' => ['type' => 'ephemeral'],
         'cache_type' => 'ephemeral',
-        'result_metadata' => 'should persist'
+        'result_metadata' => 'should persist',
     ]);
 
     $message = $this->conversation->messages()->latest()->first();
@@ -231,7 +237,7 @@ it('properly formats messages with empty provider options for all message types'
     $userMessage = $this->conversation->messages()->create([
         'role' => 'user',
         'content' => 'User message',
-        'metadata' => ['provider_options' => ['some' => 'options']]
+        'metadata' => ['provider_options' => ['some' => 'options']],
     ]);
     $prismUser = $userMessage->toPrismMessage();
     expect($prismUser)->toBeInstanceOf(UserMessage::class);
@@ -240,7 +246,7 @@ it('properly formats messages with empty provider options for all message types'
     $systemMessage = $this->conversation->messages()->create([
         'role' => 'system',
         'content' => 'System message',
-        'metadata' => ['cache_control' => ['type' => 'ephemeral']]
+        'metadata' => ['cache_control' => ['type' => 'ephemeral']],
     ]);
     $prismSystem = $systemMessage->toPrismMessage();
     expect($prismSystem)->toBeInstanceOf(SystemMessage::class);
@@ -249,7 +255,7 @@ it('properly formats messages with empty provider options for all message types'
     $assistantMessage = $this->conversation->messages()->create([
         'role' => 'assistant',
         'content' => 'Assistant message',
-        'metadata' => ['provider_options' => ['anthropic' => ['cache_control' => ['type' => 'ephemeral']]]]
+        'metadata' => ['provider_options' => ['anthropic' => ['cache_control' => ['type' => 'ephemeral']]]],
     ]);
     $prismAssistant = $assistantMessage->toPrismMessage();
     expect($prismAssistant)->toBeInstanceOf(AssistantMessage::class);
@@ -266,4 +272,4 @@ it('properly formats messages with empty provider options for all message types'
             }
         }
     }
-}); 
+});
