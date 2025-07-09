@@ -58,11 +58,17 @@ trait InteractsWithPrism
             throw new \BadMethodCallException('addPrismResponse can only be called on Conversation model');
         }
 
+        // Extract metadata first (this includes token counts, etc.)
+        $extractedMetadata = $this->extractPrismMetadata($response, $metadata);
+
+        // Clean metadata to remove any cache control that might have leaked through
+        $this->cleanMetadataForStorage($extractedMetadata);
+
         // Handle tool calls
         if (isset($response->toolCalls) && filled($response->toolCalls)) {
             $this->addToolCallMessage(
                 json_encode($response->toolCalls),
-                $this->extractPrismMetadata($response, $metadata)
+                $extractedMetadata
             );
 
             return $this;
@@ -72,7 +78,7 @@ trait InteractsWithPrism
         if (isset($response->toolResults) && filled($response->toolResults)) {
             $this->addToolResultMessage(
                 json_encode($response->toolResults),
-                $this->extractPrismMetadata($response, $metadata)
+                $extractedMetadata
             );
 
             return $this;
@@ -81,7 +87,7 @@ trait InteractsWithPrism
         // Standard assistant message
         $this->addAssistantMessage(
             $response->text ?? '',
-            $this->extractPrismMetadata($response, $metadata)
+            $extractedMetadata
         );
 
         return $this;
@@ -133,6 +139,17 @@ trait InteractsWithPrism
         }
 
         return array_merge($metadata, $additional);
+    }
+
+    /**
+     * Clean metadata to remove transient provider options before storage
+     */
+    protected function cleanMetadataForStorage(array &$metadata): void
+    {
+        // Remove any cache control related metadata that shouldn't be persisted
+        unset($metadata['cache_type']);
+        unset($metadata['cache_control']);
+        unset($metadata['provider_options']);
     }
 
     /**

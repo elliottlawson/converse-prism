@@ -19,13 +19,21 @@ class PrismFormatter
      */
     public static function formatMessage(Message $message): PrismMessage
     {
-        return match ($message->role) {
+        $prismMessage = match ($message->role) {
             MessageRole::User => new UserMessage($message->content ?? ''),
             MessageRole::System => new SystemMessage($message->content ?? ''),
             MessageRole::Assistant => new AssistantMessage($message->content ?? ''),
             MessageRole::ToolCall => self::createToolCallMessage($message),
             MessageRole::ToolResult => self::createToolResultMessageFromMessage($message),
         };
+
+        // Never include cache control when reconstructing messages from storage
+        // This prevents accumulation of cache control blocks in conversation history
+        if (method_exists($prismMessage, 'withProviderOptions')) {
+            $prismMessage = $prismMessage->withProviderOptions([]);
+        }
+
+        return $prismMessage;
     }
 
     /**
